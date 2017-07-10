@@ -1,9 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define MAX_ARRAY_SIZE 37 * 1000 * 1000 // fix this! waste so much memory!
-#define DATA_FILENAME "/home/caner/res/hawkes_em/data/Master_Data_Full.csv"
-
 typedef struct  {
 	unsigned long *times;
 	unsigned short int *codes;
@@ -12,7 +9,7 @@ typedef struct  {
 	short int maxcode;
 } HawkesData;
 
-void get_earliest_parent(unsigned long *times, int N, int tmax, int *epar){
+void get_earliest_parent(unsigned long *times, int N, int tmax, unsigned int *epar){
 
 	int ptr1 = N-1;
 	int ptr2 = N-1;
@@ -31,9 +28,9 @@ void get_earliest_parent(unsigned long *times, int N, int tmax, int *epar){
 
 }
 
-int initialize(unsigned long *times, unsigned short int *codes, short int *maxcode_out){
+int initialize(const char* data_filename, unsigned long *times, unsigned short int *codes, short int *maxcode_out){
 
-	FILE* stream = fopen(DATA_FILENAME, "r");
+	FILE* stream = fopen(data_filename, "r");
 	char line[1024];
 
 	int i = 0;
@@ -54,20 +51,40 @@ int initialize(unsigned long *times, unsigned short int *codes, short int *maxco
 		i++;
 	}
 
+	fclose(stream);
+
 	*maxcode_out = _mcode;
 	return i;
 }
 
-HawkesData get_all_data(int tmax){
+int get_line_count(const char * filename){
 
-	unsigned long *times = malloc(MAX_ARRAY_SIZE * sizeof(unsigned long));
-	unsigned short int *codes = malloc(MAX_ARRAY_SIZE * sizeof(unsigned short int));
-	unsigned int *epar = malloc(MAX_ARRAY_SIZE * sizeof(unsigned int));
+	int count = 0;
+	FILE *handle;
+	handle = fopen(filename, "r");
+
+	if (handle == NULL)
+		return -1;
+
+	char buf[20];
+	while(fgets(buf, sizeof(buf), handle) != NULL)
+	  count++;
+
+	return count;
+}
+
+HawkesData get_all_data(const char * data_filename, int tmax){
+
+	int array_size = get_line_count(data_filename);
+
+	unsigned long *times = malloc(array_size * sizeof(unsigned long));
+	unsigned short int *codes = malloc(array_size * sizeof(unsigned short int));
+	unsigned int *epar = malloc(array_size * sizeof(unsigned int));
 
 	short int maxcode;
 	int N;
 
-	N = initialize(times, codes, &maxcode);
+	N = initialize(data_filename, times, codes, &maxcode);
 
 	get_earliest_parent(times, N, tmax, epar);
 
@@ -76,9 +93,8 @@ HawkesData get_all_data(int tmax){
 	return res;
 }
 
-
-int main(){
-	HawkesData r = get_all_data(100);
-
-	// printf("%d", r.epar[99]);
+void release_all_data(HawkesData r){
+	free(r.times);
+	free(r.codes);
+	free(r.epar);
 }
