@@ -1,3 +1,9 @@
 build/
 *.html
 *.so
+.ipynb_checkpoints/
+a.out
+em.c
+hawkes.py
+hawkes_code.tar.gz
+
