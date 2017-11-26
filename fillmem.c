@@ -1,3 +1,7 @@
+/*
+    Set of helper functions for working with the Multivariate Beta Delay model
+*/
+
 #include <stdio.h>
 #include <stdlib.h>
 
