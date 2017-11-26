@@ -55,8 +55,6 @@ class UnivariateExpHawkesProcess(PointProcess):
             # TODO: enforce inequality constraint
             from scipy.optimize import minimize
 
-
-
             x0 = np.random.rand(2)
             x0[0] *= x0[1]  # make sure initial soln is feasible
             x0 = np.concatenate((x0, (lda_hat, )))
