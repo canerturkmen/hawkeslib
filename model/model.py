@@ -32,7 +32,7 @@ class PointProcess(object):
         pass
 
     @abc.abstractmethod
-    def log_likelihood(self, t_n, c_n):
+    def log_likelihood(self, *args):
         """
         Calculate log likelihood function under the model for the given
         :param t_n:
@@ -43,10 +43,9 @@ class PointProcess(object):
         pass
 
     @abc.abstractmethod
-    def fit(self):
+    def fit(self, *args):
         """
-        Given a mark and
-        :return:
+
         """
         pass
 

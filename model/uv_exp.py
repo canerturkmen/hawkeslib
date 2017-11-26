@@ -3,6 +3,7 @@ Univariate (K=1) Hawkes model with a single exponential delay density.
 """
 import numpy as np
 from .model import PointProcess
+from .c.c_uv_exp import *
 
 class UnivariateExpHawkesProcess(PointProcess):
 
@@ -12,6 +13,16 @@ class UnivariateExpHawkesProcess(PointProcess):
 
     def __init__(self):
         pass
+
+    @classmethod
+    def log_likelihood_with_params(cls, t_n, _a, _b, _l0):
+        assert _a < _b, "Not stationary!"
+        return uv_exp_loglike(t_n, _a, _b, _l0)
+
+    def _fetch_params(self):
+        _a, _b, _l0 = self.get_params()
+        assert None not in (_a, _b, _l0), "Some parameters seem to be missing. Did you fit() already?"
+        return _a, _b, _l0
 
     def set_params(self, alpha, beta, lda0):
         """
@@ -31,26 +42,40 @@ class UnivariateExpHawkesProcess(PointProcess):
         return self._alpha, self._beta, self._lda0
 
     def sample(self, T):
-        _a, _b, _l0 = self.get_params()
+        return uv_exp_sample(T, *self._fetch_params())
 
-        assert None not in (_a, _b, _l0), "Some parameters seem to be missing. Did you fit() already?"
+    def log_likelihood(self, t_n):
+        return uv_exp_loglike(t_n, *self._fetch_params())
 
-        arr = []
-        s, n = 0, 0
+    def fit(self, t_n, method='lbfgs'):
 
-        while s < T:
-            lda_bar = _l0 + np.sum(_a * np.exp(- _b * (s - np.array(arr))))
+        lda_hat = len(t_n) / (1.2 * t_n[-1])
 
-            u = np.random.rand()
-            w = - np.log(u) / lda_bar
-            s += w
+        if method == "lbfgs":
+            # TODO: enforce inequality constraint
+            from scipy.optimize import minimize
 
-            D = np.random.rand()
-            if D * lda_bar <= _l0 + np.sum(_a * np.exp(- _b * (s - np.array(arr)))):
-                n += 1
-                arr.append(s)
 
-        if arr[-1] > T:
-            arr = arr[:-1]
 
-        return arr
+            x0 = np.random.rand(2)
+            x0[0] *= x0[1]  # make sure initial soln is feasible
+            x0 = np.concatenate((x0, (lda_hat, )))
+
+            print x0
+
+            minres = minimize(lambda x: -self.log_likelihood_with_params(t_n, x[0], x[1], x[2]),
+                              x0=x0,
+                              bounds=[(0, 1), (0, 1), (0, None)],
+                              method="L-BFGS-B")
+            print minres
+
+        elif method == 'pso':  # particle swarm
+            # TODO: enforce inequality constraint
+            from pyswarm import pso
+
+            xopt, fopt = pso(lambda x: -self.log_likelihood_with_params(t_n, x[0], x[1], x[2]),
+                             [0, 0, 0],
+                             [1, 1, lda_hat * 2],
+                             f_ieqcons=lambda x: [- x[0] + x[1]])
+
+            print xopt, fopt
