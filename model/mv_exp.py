@@ -65,7 +65,14 @@ class MultivariateExpHawkesProcess(PointProcess):
 
     def fit(self, t_n, c_n):
 
-        lda_hat = len(t_n) / (1.2 * t_n[-1])
+        c_n = c_n.astype(np.int32)
+        K = len(np.unique(c_n))
+        T = t_n[-1]
+
+        # sensible starting values for lambda
+        lda_hat = np.zeros(K)
+        for k in range(K):
+            lda_hat = np.sum(c_n == k) / 1.2
 
         from scipy.optimize import minimize
 

@@ -30,7 +30,7 @@ def mv_exp_loglike(np.ndarray[ndim=1, dtype=np.float64_t] t,
         last[k] = -1
 
     with nogil:
-        T = t[N]
+        T = t[N-1]
         ll_sum = 0
         nll_sum = 0
 
@@ -46,13 +46,13 @@ def mv_exp_loglike(np.ndarray[ndim=1, dtype=np.float64_t] t,
                     B[i] = 0
                     last[l] = i
                 else:
-                    l_temp += alpha[l, ci] * exp(-beta[ci] * (t[i] - t[last[l]])) * (1 + B[last[l]])
+                    l_temp += alpha[l, ci] * beta[ci] * exp(-beta[ci] * (t[i] - t[last[l]])) * (1 + B[last[l]])
                     if ci == l:
                         B[i] = exp(-beta[l] * (t[i] - t[last[l]])) * (1 + B[last[l]])
                         last[l] = i
 
                 # for nll
-                nll_sum += alpha[l, ci] * (1 - exp(-beta[ci] * (T - t[i]) ) )
+                nll_sum -= alpha[l, ci] *  (1 - exp(-beta[ci] * (T - t[i]) ) )
 
             ll_sum += log(l_temp)
 
