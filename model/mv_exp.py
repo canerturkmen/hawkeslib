@@ -48,7 +48,7 @@ class MultivariateExpHawkesProcess(PointProcess):
         :return:
         """
         # self.assert_stationarity(alpha)
-        assert np.min(map(np.min, [alpha, beta, lda0])) > 0, "Parameters cannot be below zero!"
+        assert np.min(map(np.min, [alpha, beta, lda0])) >= 0, "Parameters cannot be below zero!"
 
         assert alpha.shape[0] == alpha.shape[1], "Matrix must be square!!"
         assert alpha.shape[0] == len(beta), "Alpha and beta sizes are inconsistent"
@@ -75,7 +75,7 @@ class MultivariateExpHawkesProcess(PointProcess):
         for k in range(K):
             lda_hat[k] = np.sum(c_n == k) / 1.2
 
-        alpha = np.eye(K) * np.random.rand() * .5
+        alpha = np.eye(K) * np.random.rand() * .5 + np.random.rand(K, K) * .1
         beta  = np.random.rand(K)
 
         # we code the vector as

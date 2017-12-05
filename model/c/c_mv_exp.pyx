@@ -52,7 +52,7 @@ def mv_exp_loglike(np.ndarray[ndim=1, dtype=np.float64_t] t,
                         last[l] = i
 
                 # for nll
-                nll_sum -= alpha[l, ci] *  (1 - exp(-beta[ci] * (T - t[i]) ) )
+                nll_sum += alpha[l, ci] *  (1 - exp(-beta[ci] * (T - t[i]) ) )
 
             ll_sum += log(l_temp)
 
