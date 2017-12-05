@@ -65,7 +65,10 @@ class UnivariateExpHawkesProcess(PointProcess):
                               x0=x0,
                               bounds=[(0, 1), (0, 1), (0, None)],
                               method="L-BFGS-B")
-            print minres
+            return minres
+
+            # todo: correctly set params!
+            # self.set_params(x[0], x[1], x[2])
 
         elif method == 'pso':  # particle swarm
             # TODO: enforce inequality constraint

@@ -27,7 +27,7 @@ class MultivariateExpHawkesProcess(PointProcess):
 
     @classmethod
     def log_likelihood_with_params(cls, t_n, c_n, _a, _b, _l0):
-        cls.assert_stationarity(_a)
+        # cls.assert_stationarity(_a)
 
         # todo: more asserts
 
@@ -47,7 +47,7 @@ class MultivariateExpHawkesProcess(PointProcess):
         :param lda0:
         :return:
         """
-        self.assert_stationarity(alpha)
+        # self.assert_stationarity(alpha)
         assert np.min(map(np.min, [alpha, beta, lda0])) > 0, "Parameters cannot be below zero!"
 
         assert alpha.shape[0] == alpha.shape[1], "Matrix must be square!!"
@@ -64,6 +64,7 @@ class MultivariateExpHawkesProcess(PointProcess):
         return mv_exp_loglike(t_n, c_n, a, b, l)
 
     def fit(self, t_n, c_n):
+        from scipy.optimize import minimize
 
         c_n = c_n.astype(np.int32)
         K = len(np.unique(c_n))
@@ -72,20 +73,29 @@ class MultivariateExpHawkesProcess(PointProcess):
         # sensible starting values for lambda
         lda_hat = np.zeros(K)
         for k in range(K):
-            lda_hat = np.sum(c_n == k) / 1.2
+            lda_hat[k] = np.sum(c_n == k) / 1.2
 
-        from scipy.optimize import minimize
+        alpha = np.eye(K) * np.random.rand() * .5
+        beta  = np.random.rand(K)
 
-        x0 = np.random.rand(2)
-        x0[0] *= x0[1]  # make sure initial soln is feasible
-        x0 = np.concatenate((x0, (lda_hat, )))
+        # we code the vector as
+        # x[:K] -> lambda, x[K:2*K] -> beta, reshape(x[2*K:]) -> alpha
 
+        x0 = np.concatenate((lda_hat, beta, alpha.reshape((K*K,))))
+
+        print x0.shape
         print x0
 
-        minres = minimize(lambda x: -self.log_likelihood_with_params(t_n, x[0], x[1], x[2]),
+        minres = minimize(lambda x: -self.log_likelihood_with_params(t_n, c_n,
+                                                                     np.reshape(x[2*K:], (K, K)),
+                                                                     x[K: 2*K],
+                                                                     x[:K]),
                           x0=x0,
-                          bounds=[(0, 1), (0, 1), (0, None)],
+                          bounds=[(0, None) for i in range(len(x0))],
                           method="L-BFGS-B")
-        print minres
+        xopt = minres.x
+        self.set_params(np.reshape(xopt[2*K:], (K, K)), xopt[K: 2*K], xopt[:K])
+
+        return minres
 
 
