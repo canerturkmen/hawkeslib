@@ -9,38 +9,53 @@ cdef extern from "math.h":
     double exp(double x) nogil
     double log(double x) nogil
 
-def mv_log_like(np.ndarray[ndim=1, dtype=np.float64_t] t,
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def mv_exp_loglike(np.ndarray[ndim=1, dtype=np.float64_t] t,
                     np.ndarray[ndim=1, dtype=int] c,
-                    np.ndarray[ndim=2, dtype=int] alpha,
-                    np.ndarray[ndim=1, dtype=int] beta,
-                    np.ndarray[ndim=1, dtype=int] lda0,
-                 int K):
-
-    cdef int N = len(t)
+                    np.ndarray[ndim=2, dtype=np.float64_t] alpha,
+                    np.ndarray[ndim=1, dtype=np.float64_t] beta,
+                    np.ndarray[ndim=1, dtype=np.float64_t] lda0):
 
     cdef:
-        double** last = <double **> malloc(K*sizeof(double*))
-        np.ndarray[ndim=2, dtype=long] Z = np.zeros((K, N), dtype=int)
-        np.ndarray[ndim=2, dtype=long] B = np.zeros(N, dtype=int)
-        double* lci, ll # last c_i, last l
+        int N = len(t)
+        int K = len(lda0)
+        int* last = <int *> malloc(K*sizeof(int))
+        double* B = <double *> malloc(N*sizeof(double))
+        double ll_sum, l_temp, nll_sum, T # last c_i, last l
         int ci
 
     for k in range(K):
-        last[k] = NULL
+        last[k] = -1
 
     with nogil:
+        T = t[N]
+        ll_sum = 0
+        nll_sum = 0
+
+        for l in range(K):
+            nll_sum += T * lda0[l]
+
         for i in range(N):
             ci = c[i]
+            l_temp = lda0[ci]
 
             for l in range(K):
-                if last[l] == NULL:
-                    Z[l, i] = 0
-                    if l == ci:
-                        B[i] = 0
+                if last[l] == -1:
+                    B[i] = 0
+                    last[l] = i
                 else:
-                    Z[l, i] = (1 + B[last[l]]) * exp( -beta[ci] * (t[i] - t[last[l]]) )
-                    if l == ci:
-                        B[i] = Z[l, i]
+                    l_temp += alpha[l, ci] * exp(-beta[ci] * (t[i] - t[last[l]])) * (1 + B[last[l]])
+                    if ci == l:
+                        B[i] = exp(-beta[l] * (t[i] - t[last[l]])) * (1 + B[last[l]])
+                        last[l] = i
 
-    # np.sum(np.log(Z.sum(0) + lda0))
-    pass
+                # for nll
+                nll_sum += alpha[l, ci] * (1 - exp(-beta[ci] * (T - t[i]) ) )
+
+            ll_sum += log(l_temp)
+
+    free(last)
+    free(B)
+    return ll_sum - nll_sum
