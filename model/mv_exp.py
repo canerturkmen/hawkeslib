@@ -73,7 +73,7 @@ class MultivariateExpHawkesProcess(PointProcess):
         # sensible starting values for lambda
         lda_hat = np.zeros(K)
         for k in range(K):
-            lda_hat[k] = np.sum(c_n == k) / 1.2
+            lda_hat[k] = np.sum(c_n == k) / (1.2 * T)
 
         alpha = np.eye(K) * np.random.rand() * .5 + np.random.rand(K, K) * .1
         beta  = np.random.rand(K)
@@ -90,9 +90,11 @@ class MultivariateExpHawkesProcess(PointProcess):
                                                                      np.reshape(x[2*K:], (K, K)),
                                                                      x[K: 2*K],
                                                                      x[:K]),
-                          x0=x0,
-                          bounds=[(0, None) for i in range(len(x0))],
-                          method="L-BFGS-B")
+                              x0=x0,
+                              bounds=[(0, None) for i in range(len(x0))],
+                              method="L-BFGS-B",
+                              options={"eps": 1e-9, "ftol": 1e-13, "gtol": 1e-12}
+                          )
         xopt = minres.x
         self.set_params(np.reshape(xopt[2*K:], (K, K)), xopt[K: 2*K], xopt[:K])
 
