@@ -33,6 +33,12 @@ class MultivariateExpHawkesProcess(PointProcess):
 
         return mv_exp_loglike(t_n, c_n, _a, _b, _l0)
 
+    @classmethod
+    def grad_flat_loglike_with_params(cls, t_n, c_n, _a, _b, _l0):
+        ga, gb, gl0 = mv_exp_jac_loglike(t_n, c_n, _a, _b, _l0)
+        K = len(gb)
+        return np.concatenate((gl0, gb, ga.reshape((K * K,))))
+
     def _fetch_params(self):
         _a, _b, _l0 = self.get_params()
         assert None not in (_a, _b, _l0), "Some parameters seem to be missing. Did you fit() already?"
@@ -87,6 +93,10 @@ class MultivariateExpHawkesProcess(PointProcess):
         print x0
 
         minres = minimize(lambda x: -self.log_likelihood_with_params(t_n, c_n,
+                                                                     np.reshape(x[2*K:], (K, K)),
+                                                                     x[K: 2*K],
+                                                                     x[:K]),
+                              jac=lambda x: -self.grad_flat_loglike_with_params(t_n, c_n,
                                                                      np.reshape(x[2*K:], (K, K)),
                                                                      x[K: 2*K],
                                                                      x[:K]),
