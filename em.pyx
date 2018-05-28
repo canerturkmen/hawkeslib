@@ -153,7 +153,8 @@ def hawkes_em(str data_filename, int tmax, int maxiter=100, int n_threads=4, lda
                     if d == 0 or d == tmax:
                         _lnpar[j] = 1
                     else:
-                        _lnpar[j] = log(Phi[cm, cn]) + beta[cn] * log(1 - <double>d / tmax) + log(beta[cn]) + log(<double>tmax - d)
+                        _lnpar[j] = log(Phi[cm, cn]) + beta[cn] * log(1 - <double>d / tmax) \
+                                    + log(beta[cn]) + log(<double>tmax - d)
                         if _lnpar[j] > _lsemax:
                             _lsemax = _lnpar[j]
 
