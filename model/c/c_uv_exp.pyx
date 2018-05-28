@@ -113,15 +113,15 @@ def uv_exp_ll_grad(cnp.ndarray[ndim=1, dtype=npfloat] t, double mu, double alpha
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def uv_exp_sample_ogata(double mu, double alpha, double theta, double T, double phi=0):
+def uv_exp_sample_ogata(double T, double mu, double alpha, double theta, double phi=0):
     """
     Implements Ogata's modified thinning algorithm for sampling from a univariate Hawkes process
     with exponential decay.
 
+    :param T: the maximum time
     :param mu: the exogenous intensity
     :param alpha: the infectivity factor alpha
     :param theta: intensity parameter of the delay density
-    :param T: the maximum time
     :param phi: (optionally) the starting phi, the running sum of exponential differences specifying the history until
     a certain time, thus making it possible to take conditional samples
 

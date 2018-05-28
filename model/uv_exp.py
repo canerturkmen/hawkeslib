@@ -3,80 +3,122 @@ Univariate (K=1) Hawkes model with a single exponential delay density.
 """
 import numpy as np
 from .model import PointProcess
-from .c.c_uv_exp import *
+from .c.c_uv_exp import uv_exp_ll, uv_exp_ll_grad, uv_exp_sample_ogata
+from scipy.optimize import minimize
+
 
 class UnivariateExpHawkesProcess(PointProcess):
+    """
+    Class for the univariate Hawkes process (self-exciting process) with the exponential conditional intensity
+    function.
 
+    .. math::
+
+        \lambda^*(t) = \mu + \alpha \theta \sum_{t_i < t} \exp(-\theta (t - t_i))
+    """
+
+    _mu = None
     _alpha = None
-    _beta = None
-    _lda0 = None
+    _theta = None
 
     def __init__(self):
         pass
 
     @classmethod
-    def log_likelihood_with_params(cls, t_n, _a, _b, _l0):
-        assert _a < _b, "Not stationary!"
-        return uv_exp_loglike(t_n, _a, _b, _l0)
-
-    def _fetch_params(self):
-        _a, _b, _l0 = self.get_params()
-        assert None not in (_a, _b, _l0), "Some parameters seem to be missing. Did you fit() already?"
-        return _a, _b, _l0
-
-    def set_params(self, alpha, beta, lda0):
+    def log_likelihood_with_params(cls, t, mu, alpha, theta):
         """
-        Manually set the parameters of the Hawkes process.
+        Calculate the log likelihood of a bounded finite realization, given a set of parameters.
 
-        :param alpha:
-        :param beta:
-        :param lda0:
+        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be sorted (asc).
+        dtype must be float
+        :param mu: the exogenous intensity
+        :param alpha: the infectivity factor alpha
+        :param theta: intensity parameter of the delay density
         :return:
         """
-        assert alpha < beta, "Not stationary!"
-        assert np.min([lda0, alpha, beta]) > 0, "Parameters cannot be below zero!"
+        assert alpha < 1, "Not stationary!"
+        return uv_exp_ll(t, mu, alpha, theta)
 
-        self._alpha, self._beta, self._lda0 = alpha, beta, lda0
+    def _fetch_params(self):
+        """
+        Get the parameters currently in the object.
+        :return: 3-tuple, (mu, alpha, theta)
+        """
+        pars = self._mu, self._alpha, self._theta
+        assert None not in pars, "Some parameters seem to be missing. Did you fit() already?"
+        return pars
+
+    def set_params(self, mu, alpha, theta):
+        """
+        Manually set the parameters of process (without fitting).
+
+        :param mu: the exogenous intensity
+        :param alpha: the infectivity factor alpha
+        :param theta: intensity parameter of the delay density
+        :return: 3-tuple, (mu, alpha, theta)
+        """
+        assert alpha < 1, "Not stationary!"
+        assert np.min([mu, alpha, theta]) > 0, "Parameters must be greater than zero!"
+
+        self._mu, self._alpha, self._theta = mu, alpha, theta
 
     def get_params(self):
-        return self._alpha, self._beta, self._lda0
+        return self._fetch_params()
 
     def sample(self, T):
-        return uv_exp_sample(T, *self._fetch_params())
+        """
+        Take an (unconditional) sample from the process using Ogata's modified thinning method.
 
-    def log_likelihood(self, t_n):
-        return uv_exp_loglike(t_n, *self._fetch_params())
+        :param T: maximum time (samples from :math:`[0, T]`)
+        :return: 1-d ndarray of sampled timestamps
+        """
+        return uv_exp_sample_ogata(T, *self._fetch_params())
 
-    def fit(self, t_n, method='lbfgs'):
+    def log_likelihood(self, t, T=None):
+        """
+        Get the log likelihood of a bounded finite realization on [0,T]. If T is not provided, it is taken
+        as the last point in the realization.
 
-        lda_hat = len(t_n) / (1.2 * t_n[-1])
+        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
+        sorted (asc). dtype must be float.
+        :param T: (optional) maximum time
+        :return: the log likelihood
+        """
+        m, a, th = self._fetch_params()
+        if T is None:
+            T = t[-1]
+        return uv_exp_ll(t, m, a, th, T)
 
-        if method == "lbfgs":
-            # TODO: enforce inequality constraint
-            from scipy.optimize import minimize
+    def fit(self, t, T=None):
+        """
+        Given a bounded finite realization on [0, T], fit parameters with line search (L-BFGS-B).
 
-            x0 = np.random.rand(2)
-            x0[0] *= x0[1]  # make sure initial soln is feasible
-            x0 = np.concatenate((x0, (lda_hat, )))
+        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
+        sorted (asc). dtype must be float.
+        :param T: (optional) maximum time. If None, the last occurrence time will be taken.
 
-            print x0
+        :return: the optimization result
+        :rtype: scipy.optimize.optimize.OptimizeResult
+        """
 
-            minres = minimize(lambda x: -self.log_likelihood_with_params(t_n, x[0], x[1], x[2]),
-                              x0=x0,
-                              bounds=[(0, 1), (0, 1), (0, None)],
-                              method="L-BFGS-B")
-            return minres
+        N = len(t)
 
-            # todo: correctly set params!
-            # self.set_params(x[0], x[1], x[2])
+        if T is None:
+            T = t[-1]
 
-        elif method == 'pso':  # particle swarm
-            # TODO: enforce inequality constraint
-            from pyswarm import pso
+        # estimate starting mu via the unconditional sample formula assuming
+        # $\alpha \approx 0.2$
+        mu0 = N * 0.8 / T
 
-            xopt, fopt = pso(lambda x: -self.log_likelihood_with_params(t_n, x[0], x[1], x[2]),
-                             [0, 0, 0],
-                             [1, 1, lda_hat * 2],
-                             f_ieqcons=lambda x: [- x[0] + x[1]])
+        # initialize other parameters randomly
+        a0, th0 = np.random.rand(2)
 
-            print xopt, fopt
+        minres = minimize(lambda x: -uv_exp_ll(t, x[0], x[1], x[2], T),
+                          x0=np.array([mu0, a0, th0]),
+                          jac=lambda x: -uv_exp_ll_grad(t, x[0], x[1], x[2], T),
+                          bounds=[(1e-5, None), (1e-5, 1), (1e-5, None)],
+                          method="L-BFGS-B", options={"disp": True})
+
+        self.set_params(*minres.x)
+
+        return minres
