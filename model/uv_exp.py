@@ -102,9 +102,6 @@ class UnivariateExpHawkesProcess(PointProcess):
         :rtype: scipy.optimize.optimize.OptimizeResult
         """
 
-        # todo: sometimes converges to a point where the unconditional mean is significantly off
-        # todo: from the true value. happens about 5% of the time
-
         N = len(t)
 
         if T is None:
