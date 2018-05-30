@@ -72,7 +72,8 @@ class UnivariateExpHawkesProcess(PointProcess):
         :param T: maximum time (samples from :math:`[0, T]`)
         :return: 1-d ndarray of sampled timestamps
         """
-        return uv_exp_sample_ogata(T, *self._fetch_params())
+        mu, alpha, theta = self._fetch_params()
+        return uv_exp_sample_ogata(T, mu, alpha, theta)
 
     def log_likelihood(self, t, T=None):
         """
@@ -101,23 +102,39 @@ class UnivariateExpHawkesProcess(PointProcess):
         :rtype: scipy.optimize.optimize.OptimizeResult
         """
 
+        # todo: sometimes converges to a point where the unconditional mean is significantly off
+        # todo: from the true value. happens about 5% of the time
+
         N = len(t)
 
         if T is None:
             T = t[-1]
 
-        # estimate starting mu via the unconditional sample formula assuming
-        # $\alpha \approx 0.2$
-        mu0 = N * 0.8 / T
+        ress = []
 
-        # initialize other parameters randomly
-        a0, th0 = np.random.rand(2)
+        # due to a convergence problem, we reiterate until the unconditional mean starts making sense
+        for epoch in range(5):
+            # estimate starting mu via the unconditional sample formula assuming
+            # $\alpha \approx 0.2$
+            mu0 = N * 0.8 / T
 
-        minres = minimize(lambda x: -uv_exp_ll(t, x[0], x[1], x[2], T),
-                          x0=np.array([mu0, a0, th0]),
-                          jac=lambda x: -uv_exp_ll_grad(t, x[0], x[1], x[2], T),
-                          bounds=[(1e-5, None), (1e-5, 1), (1e-5, None)],
-                          method="L-BFGS-B", options={"disp": True})
+            # initialize other parameters randomly
+            a0, th0 = np.random.rand(2)
+            # todo: initialize th0 better ?
+
+            minres = minimize(lambda x: -uv_exp_ll(t, x[0], x[1], x[2], T),
+                              x0=np.array([mu0, a0, th0]),
+                              jac=lambda x: -uv_exp_ll_grad(t, x[0], x[1], x[2], T),
+                              bounds=[(1e-5, None), (1e-5, 1), (1e-5, None)],
+                              method="L-BFGS-B", options={"disp": True, "ftol": 1e-10, "gtol": 1e-8})
+
+            ress.append(minres)
+            mu, a, _ = minres.x
+
+            # take the unconditional mean and see if it makes sense
+            Napprox = mu * T / (1 - a)
+            if abs(Napprox - N)/N < .01:  # if the approximation error is in range, break
+                break
 
         self.set_params(*minres.x)
 

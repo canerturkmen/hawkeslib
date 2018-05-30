@@ -2,8 +2,6 @@ import cython
 from libc.stdlib cimport malloc, free
 import numpy as np
 cimport numpy as np
-# from cython.parallel import prange, parallel
-# cimport openmp
 
 cdef extern from "math.h":
     double exp(double x) nogil

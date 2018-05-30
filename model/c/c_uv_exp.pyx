@@ -139,8 +139,8 @@ def uv_exp_sample_ogata(double T, double mu, double alpha, double theta, double 
         while t < T:
             M = mu + alpha * theta * (1 + phi)
 
-            r1 = rand() / RAND_MAX
-            r2 = rand() / RAND_MAX
+            r1 = <double>rand() / RAND_MAX
+            r2 = <double>rand() / RAND_MAX
 
             E = -log(r1) / M
             t = t + E
