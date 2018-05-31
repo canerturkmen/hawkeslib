@@ -157,3 +157,48 @@ def uv_exp_sample_ogata(double T, double mu, double alpha, double theta, double 
         res[j] = td[j]
 
     return res
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def _get_offspring(double t, double alpha, double theta, double T):
+    cdef:
+        int N = np.random.poisson(alpha)
+        cdef cnp.ndarray[npfloat] os = np.empty(shape=(N,), dtype=np.float)  # offsprings
+        int j
+        double tt
+
+    with nogil:
+        for j in range(N):
+            tt = -log(uu()) / theta + t
+            os[j] = tt
+
+    return os[os < T]
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def uv_exp_sample_branching(double T, double mu, double alpha, double theta):
+    """
+    Implement a branching sampler for a univariate exponential HP, taking advantage of the
+    cluster process representation. As pointed out by Moller and Rasmussen (2005), this is an approximate sampler
+    and suffers from edge effects.
+    """
+    cdef:
+        cnp.ndarray[npfloat] P = np.array([])
+        int imm_count
+        cnp.ndarray[npfloat] curr_gen
+
+    imm_count = np.random.poisson(mu * T)
+    curr_gen = np.random.rand(imm_count) * T
+
+    while len(curr_gen) > 0:
+        P = np.concatenate([P, curr_gen])
+        offsprings = []
+        for k in curr_gen:
+            v = _get_offspring(k, alpha, theta, T)
+            offsprings.append(v)
+
+        curr_gen = np.concatenate(offsprings)
+
+    return P

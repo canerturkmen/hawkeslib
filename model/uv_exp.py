@@ -3,7 +3,7 @@ Univariate (K=1) Hawkes model with a single exponential delay density.
 """
 import numpy as np
 from .model import PointProcess
-from .c.c_uv_exp import uv_exp_ll, uv_exp_ll_grad, uv_exp_sample_ogata
+from .c.c_uv_exp import uv_exp_ll, uv_exp_ll_grad, uv_exp_sample_ogata, uv_exp_sample_branching
 from scipy.optimize import minimize
 
 
@@ -65,14 +65,18 @@ class UnivariateExpHawkesProcess(PointProcess):
     def get_params(self):
         return self._fetch_params()
 
-    def sample(self, T):
+    def sample(self, T, method="ogata"):
         """
-        Take an (unconditional) sample from the process using Ogata's modified thinning method.
+        Take an (unconditional) sample from the process using Ogata's modified thinning method or
+        a sampler exploiting the Poisson cluster structure of HP.
 
         :param T: maximum time (samples from :math:`[0, T]`)
+        :param method: str, either "ogata" or "branching"
         :return: 1-d ndarray of sampled timestamps
         """
         mu, alpha, theta = self._fetch_params()
+        if method == "branching":
+            return uv_exp_sample_branching(T, mu, alpha, theta)
         return uv_exp_sample_ogata(T, mu, alpha, theta)
 
     def log_likelihood(self, t, T=None):
