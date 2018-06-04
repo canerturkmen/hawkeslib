@@ -3,7 +3,7 @@ Univariate (K=1) Hawkes model with a single exponential delay density.
 """
 import numpy as np
 from .model import PointProcess
-from .c.c_uv_exp import uv_exp_ll, uv_exp_ll_grad, uv_exp_sample_ogata, uv_exp_sample_branching
+from .c.c_uv_exp import uv_exp_ll, uv_exp_ll_grad, uv_exp_sample_ogata, uv_exp_sample_branching, uv_exp_fit_em
 from scipy.optimize import minimize
 
 
@@ -25,7 +25,7 @@ class UnivariateExpHawkesProcess(PointProcess):
         pass
 
     @classmethod
-    def log_likelihood_with_params(cls, t, mu, alpha, theta):
+    def log_likelihood_with_params(cls, t, mu, alpha, theta, T=None):
         """
         Calculate the log likelihood of a bounded finite realization, given a set of parameters.
 
@@ -37,6 +37,8 @@ class UnivariateExpHawkesProcess(PointProcess):
         :return:
         """
         assert alpha < 1, "Not stationary!"
+        if T is None:
+            T = t[-1]
         return uv_exp_ll(t, mu, alpha, theta)
 
     def _fetch_params(self):
@@ -94,7 +96,7 @@ class UnivariateExpHawkesProcess(PointProcess):
             T = t[-1]
         return uv_exp_ll(t, m, a, th, T)
 
-    def fit(self, t, T=None):
+    def _fit_grad_desc(self, t, T=None):
         """
         Given a bounded finite realization on [0, T], fit parameters with line search (L-BFGS-B).
 
@@ -107,9 +109,6 @@ class UnivariateExpHawkesProcess(PointProcess):
         """
 
         N = len(t)
-
-        if T is None:
-            T = t[-1]
 
         ress = []
 
@@ -137,6 +136,25 @@ class UnivariateExpHawkesProcess(PointProcess):
             if abs(Napprox - N)/N < .01:  # if the approximation error is in range, break
                 break
 
-        self.set_params(*minres.x)
-
         return minres
+
+    def fit(self, t, T=None, method="em", **kwargs):
+
+        if T is None:
+            T = t[-1]
+
+        if method == "em":  # expectation-maximization
+            maxiter = kwargs.get("maxiter")
+            reltol = kwargs.get("reltol")
+
+            ll, params = uv_exp_fit_em(t, T, maxiter=maxiter, reltol=reltol)
+
+        elif method == "gd":  # gradient descent
+            minres = self._fit_grad_desc(t, T)
+
+            params = minres.x
+            ll = self.log_likelihood_with_params(t, params[0], params[1], params[2])
+
+        self.set_params(*params)
+
+        return ll
