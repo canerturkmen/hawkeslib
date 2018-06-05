@@ -233,11 +233,13 @@ def uv_exp_fit_em(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxiter=50
 
     cdef:
         double t0 = t[0], ti, d, r
-        double lnmu = log(5.), lnalpha = log(.5), lntheta = log(1e-3), theta
+        double lnmu, lnalpha = log(.5), lntheta = log(.5), theta
         double lnphi, lnga, lnE1, lnE2, lnE3, lnC1, lnC2, lnath
         double lned, lner, ln1pphi, lnZ, lnatz, odll = -1e15, relimp
         double odll_p = uv_exp_ll(t, exp(lnmu), exp(lnalpha), exp(lntheta), T)
         int i, j = 0, N = len(t)
+
+    lnmu = log(N * 0.8 / T)
 
     for j in range(maxiter):
 
@@ -291,11 +293,11 @@ def uv_exp_fit_em(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxiter=50
 
         # calculate observed data log likelihood
         odll = uv_exp_ll(t, exp(lnmu), exp(lnalpha), exp(lntheta), T)
-        relimp = (odll - odll_p) / odll_p  # relative improvement
-        if relimp < 0:
-            raise Exception("Convergence problem, the bound did not increase")
-        elif relimp < reltol:
-            break
+        relimp = (odll - odll_p) / abs(odll_p)  # relative improvement
+        # if relimp < 0:
+        #     raise Exception("Convergence problem, the log likelihood did not increase")
+        # elif relimp < reltol:
+        #     break
         odll_p = odll
 
     return odll, (exp(lnmu), exp(lnalpha), exp(lntheta)), j

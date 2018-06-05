@@ -39,7 +39,7 @@ class UnivariateExpHawkesProcess(PointProcess):
         assert alpha < 1, "Not stationary!"
         if T is None:
             T = t[-1]
-        return uv_exp_ll(t, mu, alpha, theta)
+        return uv_exp_ll(t, mu, alpha, theta, T)
 
     def _fetch_params(self):
         """
@@ -144,10 +144,9 @@ class UnivariateExpHawkesProcess(PointProcess):
             T = t[-1]
 
         if method == "em":  # expectation-maximization
-            maxiter = kwargs.get("maxiter")
-            reltol = kwargs.get("reltol")
+            emkwargs = {k: v for k, v in kwargs.items() if k in ["maxiter", "reltol"]}
 
-            ll, params = uv_exp_fit_em(t, T, maxiter=maxiter, reltol=reltol)
+            ll, params, _ = uv_exp_fit_em(t, T, **emkwargs)
 
         elif method == "gd":  # gradient descent
             minres = self._fit_grad_desc(t, T)
