@@ -9,6 +9,7 @@ import cython
 import numpy as np
 cimport numpy as cnp
 from cython.parallel cimport prange
+import warnings
 
 ctypedef cnp.float64_t npfloat
 
@@ -236,10 +237,11 @@ def uv_exp_fit_em(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxiter=50
         double lnmu, lnalpha = log(.5), lntheta = log(.5), theta
         double lnphi, lnga, lnE1, lnE2, lnE3, lnC1, lnC2, lnath
         double lned, lner, ln1pphi, lnZ, lnatz, odll = -1e15, relimp
-        double odll_p = uv_exp_ll(t, exp(lnmu), exp(lnalpha), exp(lntheta), T)
+        double odll_p
         int i, j = 0, N = len(t)
 
     lnmu = log(N * 0.8 / T)
+    odll_p = uv_exp_ll(t, exp(lnmu), exp(lnalpha), exp(lntheta), T)
 
     for j in range(maxiter):
 
@@ -294,10 +296,98 @@ def uv_exp_fit_em(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxiter=50
         # calculate observed data log likelihood
         odll = uv_exp_ll(t, exp(lnmu), exp(lnalpha), exp(lntheta), T)
         relimp = (odll - odll_p) / abs(odll_p)  # relative improvement
-        # if relimp < 0:
-        #     raise Exception("Convergence problem, the log likelihood did not increase")
-        # elif relimp < reltol:
-        #     break
+        if relimp < 0:
+            raise Exception("Convergence problem, the log likelihood did not increase")
+        elif relimp < reltol:
+            break
         odll_p = odll
 
     return odll, (exp(lnmu), exp(lnalpha), exp(lntheta)), j
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxiter=500, double reltol=1e-5):
+    """
+    Fit a univariate Hawkes process with exponential decay function using the Expectation-Maximization
+    algorithm. The algorithm exploits the memoryless property of the delay density to compute the E-step
+    in linear time. Due to the Poisson cluster property of HP, the M-step is in constant time.
+
+    :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps
+    :param T: the maximum time
+    :param maxiter: int, maximum number of EM iterations
+    :param reltol: double, the relative improvement tolerance to stop the algorithm
+    :return: tuple, (final log likelihood, (mu, alpha, theta))
+    """
+
+    warnings.warn("This algorithm is currently not working properly and has known issues")
+
+    cdef:
+        double t0 = t[0], ti, d, r
+        double mu, alpha = 0.5, theta = 0.5
+        double phi, ga, E1, E2, E3, C1, C2
+        double ed, er
+        double Z, atz, odll, odll_p, relimp
+        int i, j = 0, N = len(t)
+
+    mu = N * 0.8 / T
+    odll_p = uv_exp_ll(t, mu, alpha, theta, T)
+
+    for j in range(maxiter):
+
+        # E-step
+
+        # initialize accumulators
+        phi, ga = 0, 0
+
+        # initialize ESS
+        E1 = 1
+        E2, E3 = 0, 0
+        C1, C2 = 0, 0
+
+        with nogil:
+
+            C1 += 1 - exp(-theta * (T - t0))
+            C2 += (T - t0) * exp(- theta * (T - t0))
+
+            for i in range(1, N):
+                ti = t[i]
+                d = ti - t[i-1] + 1e-15
+                r = T - ti + 1e-15
+
+                ed = exp(-theta * d)  # log of the exp difference exp(-theta * d)
+                er = exp(-theta * r)  # log of the exp difference of time remaining (for the compensator)
+
+                ga = ed * (d * (1 + phi) + ga)
+                phi = ed * (1 + phi)
+
+                Z = mu + alpha * theta * phi
+                atz = alpha * theta / Z
+
+                # collect ESS
+
+                E1 += mu / Z
+                E2 += atz * phi
+                E3 += atz * ga
+
+                C1 += 1 - er
+                C2 += r * er
+
+                # M-step
+
+                mu = E1 / T
+                alpha = E2 / C1
+                theta = E2 / (E3 + alpha * C2)
+
+        # calculate observed data log likelihood
+
+        odll = uv_exp_ll(t, mu, alpha, theta, T)
+        print odll_p, odll
+        relimp = (odll - odll_p) / abs(odll_p)  # relative improvement
+        if relimp < 0:
+            raise Exception("Convergence problem, the log likelihood did not increase")
+        elif relimp < reltol:
+            break
+        odll_p = odll
+
+    return odll, (mu, alpha, theta), j
