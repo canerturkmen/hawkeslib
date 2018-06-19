@@ -214,6 +214,8 @@ def uv_exp_sample_branching(double T, double mu, double alpha, double theta):
 
         curr_gen = np.concatenate(offsprings)
 
+    P.sort(kind="mergesort")
+
     return P
 
 
@@ -320,8 +322,6 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
     :return: tuple, (final log likelihood, (mu, alpha, theta))
     """
 
-    warnings.warn("This algorithm is currently not working properly and has known issues")
-
     cdef:
         double t0 = t[0], ti, d, r
         double mu, alpha = 0.5, theta = 0.5
@@ -373,16 +373,15 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
                 C1 += 1 - er
                 C2 += r * er
 
-                # M-step
+            # M-step
 
-                mu = E1 / T
-                alpha = E2 / C1
-                theta = E2 / (E3 + alpha * C2)
+            mu = E1 / T
+            alpha = E2 / C1
+            theta = E2 / (E3 + alpha * C2)
 
         # calculate observed data log likelihood
 
         odll = uv_exp_ll(t, mu, alpha, theta, T)
-        print odll_p, odll
         relimp = (odll - odll_p) / abs(odll_p)  # relative improvement
         if relimp < 0:
             raise Exception("Convergence problem, the log likelihood did not increase")

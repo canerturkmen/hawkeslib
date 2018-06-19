@@ -3,7 +3,8 @@ Univariate (K=1) Hawkes model with a single exponential delay density.
 """
 import numpy as np
 from .model import PointProcess
-from .c.c_uv_exp import uv_exp_ll, uv_exp_ll_grad, uv_exp_sample_ogata, uv_exp_sample_branching, uv_exp_fit_em
+from .c.c_uv_exp import uv_exp_ll, uv_exp_ll_grad, uv_exp_sample_ogata, uv_exp_sample_branching, uv_exp_fit_em, \
+    uv_exp_fit_em_base
 from scipy.optimize import minimize
 
 
@@ -146,7 +147,7 @@ class UnivariateExpHawkesProcess(PointProcess):
         if method == "em":  # expectation-maximization
             emkwargs = {k: v for k, v in kwargs.items() if k in ["maxiter", "reltol"]}
 
-            ll, params, _ = uv_exp_fit_em(t, T, **emkwargs)
+            ll, params, _ = uv_exp_fit_em_base(t, T, **emkwargs)
 
         elif method == "gd":  # gradient descent
             minres = self._fit_grad_desc(t, T)
