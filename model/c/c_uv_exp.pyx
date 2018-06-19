@@ -144,6 +144,7 @@ def uv_exp_sample_ogata(double T, double mu, double alpha, double theta, double 
     cdef:
         double t = 0.
         double ed = 0.
+        double d = 0.
         double lda = 0.
         vector[npfloat] td
         int j
@@ -158,12 +159,15 @@ def uv_exp_sample_ogata(double T, double mu, double alpha, double theta, double 
             E = -log(r1) / M
             t = t + E
 
-            ed = exp(-theta * E)
+            ed = exp(-theta * (E + d))
             lda = mu + alpha * theta * ed * (1 + phi)
 
             if t < T and r2 * M <= lda:
                 td.push_back(<npfloat> t)
                 phi = ed * (1 + phi)
+                d = 0
+            else:
+                d = d + E
 
     cdef cnp.ndarray[npfloat] res = np.empty(td.size(), dtype=np.float)
     for j in prange(res.shape[0], nogil=True):

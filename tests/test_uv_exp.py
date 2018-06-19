@@ -14,7 +14,6 @@ class UVExpSamplerTests(ut.TestCase):
     def setUp(self):
         self.uv = UVHP()
         self.uv.set_params(.5, .2, 10.)
-        print(self.uv)
 
     def test_branching_correct_number_samples(self):
 
