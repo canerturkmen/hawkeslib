@@ -376,8 +376,9 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
             # M-step
 
             mu = E1 / T
-            alpha = E2 / C1
             theta = E2 / (E3 + alpha * C2)
+            alpha = E2 / C1
+
 
         # calculate observed data log likelihood
 
