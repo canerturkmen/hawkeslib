@@ -63,6 +63,10 @@ def uv_exp_ll(cnp.ndarray[ndim=1, dtype=npfloat] t, double mu, double alpha, dou
         int j = 0
 
     with nogil:
+
+        lComp -= alpha * (1 - exp(-theta * (T - t[0])))
+        lJ = log(mu)
+
         for j in range(N-1):
             d = t[j+1] - t[j]
             r = T - t[j+1]
@@ -221,94 +225,6 @@ def uv_exp_sample_branching(double T, double mu, double alpha, double theta):
     P.sort(kind="mergesort")
 
     return P
-
-
-@cython.boundscheck(False)
-@cython.wraparound(False)
-def uv_exp_fit_em(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxiter=500, double reltol=1e-5):
-    """
-    Fit a univariate Hawkes process with exponential decay function using the Expectation-Maximization
-    algorithm. The algorithm exploits the memoryless property of the delay density to compute the E-step
-    in linear time. Due to the Poisson cluster property of HP, the M-step is in constant time.
-
-    :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps
-    :param T: the maximum time
-    :param maxiter: int, maximum number of EM iterations
-    :param reltol: double, the relative improvement tolerance to stop the algorithm
-    :return: tuple, (final log likelihood, (mu, alpha, theta))
-    """
-
-    cdef:
-        double t0 = t[0], ti, d, r
-        double lnmu, lnalpha = log(.5), lntheta = log(.5), theta
-        double lnphi, lnga, lnE1, lnE2, lnE3, lnC1, lnC2, lnath
-        double lned, lner, ln1pphi, lnZ, lnatz, odll = -1e15, relimp
-        double odll_p
-        int i, j = 0, N = len(t)
-
-    lnmu = log(N * 0.8 / T)
-    odll_p = uv_exp_ll(t, exp(lnmu), exp(lnalpha), exp(lntheta), T)
-
-    for j in range(maxiter):
-
-        # E-step
-
-        # initialize accumulators
-        lnphi = -np.inf
-        lnga  = -np.inf
-
-        # initialize ESS
-        lnE1 = 0  # log(mu / mu)
-        lnE2 = -np.inf
-        lnE3 = -np.inf
-
-        with nogil:
-            theta = exp(lntheta)
-
-            lnC1 = log(1 - exp(-theta * (T - t0)))
-            lnC2 = log(T - t0) - theta * (T - t0)
-
-            lnath = lnalpha + lntheta
-
-            for i in range(1, N):
-                ti = t[i]
-                d = ti - t[i-1] + 1e-15
-                r = T - ti + 1e-15
-
-                lned = - theta * d  # log of the exp difference exp(-theta * d)
-                lner = - theta * r  # log of the exp difference of time remaining (for the compensator)
-                ln1pphi = lsexp(0, lnphi)  # log(1 + phi(i-1))
-                lnga = lned + lsexp(log(d) + ln1pphi, lnga)
-                lnphi = lned + ln1pphi
-
-                lnZ = lsexp(lnmu, lnath + lnphi)
-                lnatz = lnath - lnZ
-
-                # collect ESS
-
-                lnE1 = lsexp(lnE1, lnmu - lnZ)
-                lnE2 = lsexp(lnE2, lnatz + lnphi)
-                lnE3 = lsexp(lnE3, lnatz + lnga)
-
-                lnC1 = lsexp(lnC1, log(1 - exp(lner)))
-                lnC2 = lsexp(lnC2, log(r) + lner)
-
-            # M-step
-
-            lnmu = lnE1 - log(T)
-            lnalpha = lnE2 - lnC1
-            lntheta = lnE2 - lsexp(lnE3, lnalpha + lnC2)
-
-        # calculate observed data log likelihood
-        odll = uv_exp_ll(t, exp(lnmu), exp(lnalpha), exp(lntheta), T)
-        relimp = (odll - odll_p) / abs(odll_p)  # relative improvement
-        if relimp < 0:
-            raise Exception("Convergence problem, the log likelihood did not increase")
-        elif relimp < reltol:
-            break
-        odll_p = odll
-
-    return odll, (exp(lnmu), exp(lnalpha), exp(lntheta)), j
 
 
 @cython.boundscheck(False)
