@@ -13,11 +13,10 @@ from ..model.uv_exp import UnivariateExpHawkesProcess as UVHP
 # -- test converges to known values for 3 test fixtures
 # -- fitters hit correct methods, C functions
 # -- fitters assert stationarity
-# - log likelihood of known test fixtures
-# - log likelihood of known test fixtures, setting params
 
 # all methods with t refuse non-sorted order
 # assert all t must be less than T
+
 
 class UVExpSamplerTests(ut.TestCase):
 
@@ -96,6 +95,10 @@ class UVExpSetterGetterTests(ut.TestCase):
 
 class UVExpLikelihoodTests(ut.TestCase):
 
+    def setUp(self):
+        self.uv = UVHP()
+        self.uv.set_params(5, .3, 10.)
+
     @mock.patch('fasthawkes.model.uv_exp.uv_exp_ll')
     def test_log_likelihood_calls_correct(self, m):
         uv = UVHP()
@@ -146,7 +149,42 @@ class UVExpLikelihoodTests(ut.TestCase):
         self.assertAlmostEqual(computed, test)
 
     def test_fixture2_ok(self):
-        pass
+        import os
+        fpath = os.path.join(os.path.dirname(__file__), 'tfx_fixture.npy')
+
+        arr = np.load(fpath)
+
+        tgt = -3628302.7661192594
+        computed = self.uv.log_likelihood(arr, arr[-1])
+
+        self.assertAlmostEqual(tgt, computed)
+
+    def test_ll_methods_refuse_nonsorted(self):
+        t = np.array([3., 2., 5.])
+
+        with self.assertRaises(ValueError):
+            self.uv.log_likelihood(t, 6.)
+
+        with self.assertRaises(ValueError):
+            self.uv.log_likelihood_with_params(t, 10, .5, 10, 6.)
+
+    def test_ll_methods_refuse_invalid_T(self):
+        t = np.array([2., 3., 5.])
+
+        with self.assertRaises(ValueError):
+            self.uv.log_likelihood(t, 4.)
+
+        with self.assertRaises(ValueError):
+            self.uv.log_likelihood_with_params(t, 10, .5, 10, 4.)
+
+    def test_ll_methods_refuse_negative_t(self):
+        t = np.array([-2., 3., 5.])
+
+        with self.assertRaises(ValueError):
+            self.uv.log_likelihood(t, 7.)
+
+        with self.assertRaises(ValueError):
+            self.uv.log_likelihood_with_params(t, 10, .5, 10, 7.)
 
 
 

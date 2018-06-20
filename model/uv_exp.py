@@ -25,6 +25,15 @@ class UnivariateExpHawkesProcess(PointProcess):
         pass
 
     @classmethod
+    def _assert_good_t_T(cls, t, T):
+        if not np.all(t >= 0):
+            raise ValueError("The array t cannot contain negative time values")
+        if not np.all(np.diff(t) >= 0):
+            raise ValueError("The array t must be in sorted order")
+        if not np.all(t <= T):
+            raise ValueError("The maximum time T must be greater than all values in array t")
+
+    @classmethod
     def log_likelihood_with_params(cls, t, mu, alpha, theta, T=None):
         """
         Calculate the log likelihood of a bounded finite realization, given a set of parameters.
@@ -39,6 +48,8 @@ class UnivariateExpHawkesProcess(PointProcess):
         assert alpha < 1, "Not stationary!"
         if T is None:
             T = t[-1]
+
+        cls._assert_good_t_T(t, T)
         return uv_exp_ll(t, mu, alpha, theta, T)
 
     def _fetch_params(self):
@@ -91,9 +102,12 @@ class UnivariateExpHawkesProcess(PointProcess):
         :param T: (optional) maximum time
         :return: the log likelihood
         """
+
         m, a, th = self._fetch_params()
         if T is None:
             T = t[-1]
+        self._assert_good_t_T(t, T)
+
         return uv_exp_ll(t, m, a, th, T)
 
     def _fit_grad_desc(self, t, T=None):
@@ -139,6 +153,8 @@ class UnivariateExpHawkesProcess(PointProcess):
         return minres
 
     def fit(self, t, T=None, method="em", **kwargs):
+
+        self._assert_good_t_T(t, T)
 
         if T is None:
             T = t[-1]
