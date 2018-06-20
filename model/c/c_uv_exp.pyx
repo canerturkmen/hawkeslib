@@ -328,13 +328,16 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
 
     cdef:
         double t0 = t[0], ti, d, r
-        double mu, alpha = 0.5, theta = 0.5
+        double mu, alpha, theta
         double phi, ga, E1, E2, E3, C1, C2
         double ed, er
         double Z, atz, odll, odll_p, relimp
         int i, j = 0, N = len(t)
 
-    mu = N * 0.8 / T
+    mu = N * 0.8 * (1 + (uu() - .5) / 10.) / T
+    alpha = 0.2 + (uu() - .5) / 10.
+    theta = mu * (1 + (uu() - .5) / 10.)
+
     odll_p = uv_exp_ll(t, mu, alpha, theta, T)
 
     for j in range(maxiter):
@@ -345,7 +348,7 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
         phi, ga = 0, 0
 
         # initialize ESS
-        E1 = 1
+        E1 = 1. / mu
         E2, E3 = 0, 0
         C1, C2 = 0, 0
 
@@ -362,7 +365,7 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
                 ed = exp(-theta * d)  # log of the exp difference exp(-theta * d)
                 er = exp(-theta * r)  # log of the exp difference of time remaining (for the compensator)
 
-                ga = ed * (d * (1 + phi) + ga)
+                ga = ed * (-d * (1 + phi) + ga)
                 phi = ed * (1 + phi)
 
                 Z = mu + alpha * theta * phi
@@ -370,7 +373,7 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
 
                 # collect ESS
 
-                E1 += mu / Z
+                E1 += 1. / Z  #todo: this can be simplified (multp. mu moved to M-step)
                 E2 += atz * phi
                 E3 += atz * ga
 
@@ -379,8 +382,8 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
 
             # M-step
 
-            mu = E1 / T
-            theta = E2 / (E3 + alpha * C2)
+            mu = mu * E1 / T
+            theta = E2 / (alpha * C2 - E3)
             alpha = E2 / C1
 
 
@@ -388,7 +391,7 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
 
         odll = uv_exp_ll(t, mu, alpha, theta, T)
         relimp = (odll - odll_p) / abs(odll_p)  # relative improvement
-        if relimp < 0:
+        if relimp < -1e-5:
             raise Exception("Convergence problem, the log likelihood did not increase")
         elif relimp < reltol:
             break
