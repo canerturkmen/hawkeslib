@@ -5,17 +5,10 @@ Tests for Univariate Hawkes processes
 import unittest as ut
 import mock
 import numpy as np
+import ddt
+import os
+
 from ..model.uv_exp import UnivariateExpHawkesProcess as UVHP
-
-# what else to test?
-# - for gd and em
-# -- algorithm runs without problem
-# -- test converges to known values for 3 test fixtures
-# -- fitters hit correct methods, C functions
-# -- fitters assert stationarity
-
-# all methods with t refuse non-sorted order
-# assert all t must be less than T
 
 
 class UVExpSamplerTests(ut.TestCase):
@@ -149,7 +142,6 @@ class UVExpLikelihoodTests(ut.TestCase):
         self.assertAlmostEqual(computed, test)
 
     def test_fixture2_ok(self):
-        import os
         fpath = os.path.join(os.path.dirname(__file__), 'tfx_fixture.npy')
 
         arr = np.load(fpath)
@@ -185,6 +177,67 @@ class UVExpLikelihoodTests(ut.TestCase):
 
         with self.assertRaises(ValueError):
             self.uv.log_likelihood_with_params(t, 10, .5, 10, 7.)
+
+
+class UVExpFittingTests(ut.TestCase):
+
+    def setUp(self):
+        fpath = os.path.join(os.path.dirname(__file__), 'tfx_fixture.npy')
+        self.arr = np.load(fpath)
+
+        self.uv = UVHP()
+
+    @mock.patch('fasthawkes.model.uv_exp.uv_exp_ll_grad')
+    def test_fitter_runs_gd(self, m):
+        a = self.arr
+
+        try:
+            self.uv.fit(a, a[-1], method="gd")
+        except:
+            pass
+
+        m.assert_called()
+
+    @mock.patch('fasthawkes.model.uv_exp.uv_exp_fit_em_base')
+    def test_fitter_runs_em(self, m):
+        a = self.arr
+
+        try:
+            self.uv.fit(a, a[-1], method="em")
+        except:
+            pass
+
+        m.assert_called()
+
+    def test_fitter_refuses_nonsorted(self):
+        a = np.array([5., 6., 7., 6.5, 8.])
+
+        with self.assertRaises(ValueError):
+            self.uv.fit(a, a[-1], method="em")
+
+        with self.assertRaises(ValueError):
+            self.uv.fit(a, a[-1], method="gd")
+
+    def test_fitter_refuses_badT(self):
+        a = np.array([5., 6., 7., 8.])
+
+        with self.assertRaises(ValueError):
+            self.uv.fit(a, 6., method="em")
+
+        with self.assertRaises(ValueError):
+            self.uv.fit(a, 6., method="gd")
+
+    def test_em_fixture_correct(self):
+        self.uv.fit(self.arr, method="em")
+        pars = self.uv.get_params()
+
+        np.testing.assert_allclose(pars, [.006, .555, .1612], rtol=.05)
+
+    def test_gd_fixture_correct(self):
+        self.uv.fit(self.arr, method="gd")
+        pars = self.uv.get_params()
+
+        np.testing.assert_allclose(pars, [.006, .555, .1612], rtol=.05)
 
 
 

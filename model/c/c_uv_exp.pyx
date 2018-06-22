@@ -97,7 +97,7 @@ def uv_exp_ll_grad(cnp.ndarray[ndim=1, dtype=npfloat] t, double mu, double alpha
     :param T: the maximum time
     :return: the gradient as a numpy.array of shape (3,). Gradients w.r.t. mu, alpha, theta respectively
     """
-
+    #TODO: this is now dirty!
     cdef:
         double phi = 0., nphi = 0.
         double Calpha = 0., Ctheta = 0.
@@ -106,6 +106,11 @@ def uv_exp_ll_grad(cnp.ndarray[ndim=1, dtype=npfloat] t, double mu, double alpha
         double d = 0., r = 0.
 
     with nogil:
+
+        nmu = 1. / mu
+        Calpha = 1 - exp(-theta * (T - t[0]))
+        Ctheta = alpha * r * exp(-theta * (T - t[0]))
+
         for j in range(N-1):
             d = t[j+1] - t[j]
             r = T - t[j+1]

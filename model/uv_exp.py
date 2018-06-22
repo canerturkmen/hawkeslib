@@ -154,10 +154,10 @@ class UnivariateExpHawkesProcess(PointProcess):
 
     def fit(self, t, T=None, method="em", **kwargs):
 
-        self._assert_good_t_T(t, T)
-
         if T is None:
             T = t[-1]
+
+        self._assert_good_t_T(t, T)
 
         if method == "em":  # expectation-maximization
             emkwargs = {k: v for k, v in kwargs.items() if k in ["maxiter", "reltol"]}
