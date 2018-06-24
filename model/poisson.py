@@ -23,16 +23,6 @@ class PoissonProcess(PointProcess):
 
     @classmethod
     def log_likelihood_with_params(cls, t, mu, T=None):
-        """
-        Calculate the log likelihood of a bounded finite realization, given a set of parameters.
-
-        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be sorted (asc).
-        dtype must be float
-        :param mu: the exogenous intensity
-        :param alpha: the infectivity factor alpha
-        :param theta: intensity parameter of the delay density
-        :return:
-        """
         cls._prep_t_T(t, T)
         return -mu * T + len(T) * np.log(mu)
 
