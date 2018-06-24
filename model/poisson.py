@@ -3,6 +3,8 @@ Classes implementing a (homogenous) Poisson Process and a Bayesian version using
 """
 
 import numpy as np
+
+from model.c.c_uv_bayes import cmake_gamma_logpdf
 from .model import PointProcess
 
 
@@ -46,3 +48,41 @@ class PoissonProcess(PointProcess):
 
         return self.log_likelihood(t, T)
 
+
+class BayesianPoissonProcess(PoissonProcess):
+    """
+    Implements a "Bayesian" version of the temporal Poisson process with a conjugate Gamma prior
+    """
+
+    def _get_log_posterior_pot(self, t, T, mu_hyp):
+        """
+        Get the log (unnormalized) posterior as a callable with function
+        signature (mu,).
+
+        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
+        sorted (asc). dtype must be float.
+        :param T: (optional) maximum time
+        :param mu_hyp: tuple, hyperparameters for the prior for mu. (k, theta) for the shape-scale parameterization of
+        the Gamma distribution
+
+        :return: callable, a function with signature (mu, alpha, theta) for evaluating the log unnormalized posterior
+        """
+        self._prep_t_T(t, T)
+
+        pr_mu = cmake_gamma_logpdf(*mu_hyp)
+
+        def f0(mu, a, th):
+            return self.log_likelihood_with_params(t, mu, T) + pr_mu(mu)
+
+        return f0
+
+    def fit(self, t, T=None):
+        """
+        Fit a maximum a posteriori (MAP) estimate
+        :param t:
+        :param T:
+        :return:
+        """
+        pass
+
+    
