@@ -25,15 +25,6 @@ class UnivariateExpHawkesProcess(PointProcess):
         pass
 
     @classmethod
-    def _assert_good_t_T(cls, t, T):
-        if not np.all(t >= 0):
-            raise ValueError("The array t cannot contain negative time values")
-        if not np.all(np.diff(t) >= 0):
-            raise ValueError("The array t must be in sorted order")
-        if not np.all(t <= T):
-            raise ValueError("The maximum time T must be greater than all values in array t")
-
-    @classmethod
     def log_likelihood_with_params(cls, t, mu, alpha, theta, T=None):
         """
         Calculate the log likelihood of a bounded finite realization, given a set of parameters.
