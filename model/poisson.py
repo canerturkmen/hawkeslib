@@ -4,7 +4,7 @@ Classes implementing a (homogenous) Poisson Process and a Bayesian version using
 
 import numpy as np
 
-from model.c.c_uv_bayes import cmake_gamma_logpdf
+from .c.c_uv_bayes import cmake_gamma_logpdf
 from .model import PointProcess
 
 
@@ -25,8 +25,8 @@ class PoissonProcess(PointProcess):
 
     @classmethod
     def log_likelihood_with_params(cls, t, mu, T=None):
-        cls._prep_t_T(t, T)
-        return -mu * T + len(T) * np.log(mu)
+        t, T = cls._prep_t_T(t, T)
+        return -mu * T + len(t) * np.log(mu)
 
     def get_params(self):
         assert self._mu is not None, "The intensity parameter appears to be missing, did you fit already?"
