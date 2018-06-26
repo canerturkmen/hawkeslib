@@ -92,7 +92,7 @@ class BayesianPoissonProcess(PoissonProcess):
         N = len(t)
         k, theta = mu_hyp
 
-        return gammaln(N + k) + gammaln(k) \
+        return gammaln(N + k) - gammaln(k) \
                - (N + k) * np.log(T + 1. / theta) - k * np.log(theta)
 
     def fit(self, t, T=None):
