@@ -19,6 +19,16 @@ class PointProcess(object):
         if not np.all(t <= T):
             raise ValueError("The maximum time T must be greater than all values in array t")
 
+    @classmethod
+    def _prep_t_T(cls, t, T):
+        if T is None:
+            T = t[-1]
+        t = np.array(t)
+
+        cls._assert_good_t_T(t, T)
+
+        return t, T
+
     @abc.abstractmethod
     def sample(self, T):
         """

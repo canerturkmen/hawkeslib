@@ -4,6 +4,7 @@ from model.c.c_uv_exp import uv_exp_ll
 from .uv_exp import UnivariateExpHawkesProcess
 from .c.c_uv_bayes import cmake_gamma_logpdf, cmake_beta_logpdf
 
+
 class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
     """
     This class implements a "Bayesian" version of the univariate HP model with exponential
