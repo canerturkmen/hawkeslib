@@ -3,6 +3,7 @@ Classes implementing a (homogenous) Poisson Process and a Bayesian version using
 """
 
 import numpy as np
+from scipy.special import gammaln
 
 from .c.c_uv_bayes import cmake_gamma_logpdf
 from .model import PointProcess
@@ -67,7 +68,7 @@ class BayesianPoissonProcess(PoissonProcess):
 
         :return: callable, a function with signature (mu, alpha, theta) for evaluating the log unnormalized posterior
         """
-        self._prep_t_T(t, T)
+        t, T = self._prep_t_T(t, T)
 
         pr_mu = cmake_gamma_logpdf(*mu_hyp)
 
@@ -75,6 +76,24 @@ class BayesianPoissonProcess(PoissonProcess):
             return self.log_likelihood_with_params(t, mu, T) + pr_mu(mu)
 
         return f0
+
+    @classmethod
+    def _get_marginal_likelihood(cls, t, T, mu_hyp):
+        """
+        Take the marginal likelihood analytically using the Gamma-Poisson conjugacy
+        :param t:
+        :param T:
+        :param mu_hyp: 2-tuple, hyperparameters for the prior for mu. (k, theta) for the shape-scale parameterization of
+        the Gamma distribution
+        :return:
+        """
+        t, T = cls._prep_t_T(t, T)
+
+        N = len(t)
+        k, theta = mu_hyp
+
+        return gammaln(N + k) + gammaln(k) \
+               - (N + k) * np.log(T + 1. / theta) - k * np.log(theta)
 
     def fit(self, t, T=None):
         """
@@ -84,5 +103,3 @@ class BayesianPoissonProcess(PoissonProcess):
         :return:
         """
         pass
-
-    
