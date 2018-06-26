@@ -4,7 +4,6 @@ Classes implementing a (homogenous) Poisson Process and a Bayesian version using
 
 import numpy as np
 from scipy.special import gammaln
-from scipy.optimize import fmin
 
 from .c.c_uv_bayes import cmake_gamma_logpdf
 from .model import PointProcess
@@ -109,12 +108,14 @@ class BayesianPoissonProcess(PoissonProcess):
         :return:
         """
         t, T = self._prep_t_T(t, T)
+        k, theta = self._mu_hyp
+
+        mustar = (float(len(t)) + k - 1) / (T + 1. / theta)
+        self.set_params(mustar)
+
         logpot = self._get_log_posterior_pot(t, T, self._mu_hyp)
 
-        res = fmin(lambda x: -logpot(x), 3)
-        self.set_params(res[0])
-
-        return logpot(res[0])
+        return logpot(mustar)
 
     def sample_posterior(self, n_samp, t, T=None):
         """
