@@ -55,7 +55,8 @@ class BayesianPoissonProcess(PoissonProcess):
     Implements a "Bayesian" version of the temporal Poisson process with a conjugate Gamma prior
     """
 
-    def _get_log_posterior_pot(self, t, T, mu_hyp):
+    @classmethod
+    def _get_log_posterior_pot(cls, t, T, mu_hyp):
         """
         Get the log (unnormalized) posterior as a callable with function
         signature (mu,).
@@ -68,12 +69,12 @@ class BayesianPoissonProcess(PoissonProcess):
 
         :return: callable, a function with signature (mu, alpha, theta) for evaluating the log unnormalized posterior
         """
-        t, T = self._prep_t_T(t, T)
+        t, T = cls._prep_t_T(t, T)
 
         pr_mu = cmake_gamma_logpdf(*mu_hyp)
 
-        def f0(mu, a, th):
-            return self.log_likelihood_with_params(t, mu, T) + pr_mu(mu)
+        def f0(mu):
+            return cls.log_likelihood_with_params(t, mu, T) + pr_mu(mu)
 
         return f0
 
