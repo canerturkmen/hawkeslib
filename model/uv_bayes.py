@@ -35,10 +35,7 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
 
         :return: callable, a function with signature (mu, alpha, theta) for evaluating the log unnormalized posterior
         """
-        if T is None:
-            T = t[-1]
-
-        self._assert_good_t_T(t, T)
+        t, T = self._prep_t_T(t, T)
 
         pr_alpha = cmake_beta_logpdf(*alpha_hyp)
         pr_mu, pr_theta = cmake_gamma_logpdf(*mu_hyp), cmake_gamma_logpdf(*theta_hyp)
