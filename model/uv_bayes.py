@@ -1,8 +1,8 @@
 import numpy as np
 
-from model.c.c_uv_exp import uv_exp_ll
+from .c.c_uv_exp import uv_exp_ll, uv_exp_ll_grad
 from .uv_exp import UnivariateExpHawkesProcess
-from .c.c_uv_bayes import cmake_gamma_logpdf, cmake_beta_logpdf
+from scipy.stats import gamma, beta
 
 
 class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
@@ -19,9 +19,26 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
     they are not inferred (e.g. through empirical Bayes).
     """
 
-    def _get_log_posterior_pot(self, t, T, mu_hyp, alpha_hyp, theta_hyp):
+    def __init__(self, mu_hyp, alpha_hyp, theta_hyp):
         """
-        Get the log (unnormalized) posterior as a callable with function
+        Initialize a Bayesian HP model
+        :param mu_hyp:
+        :param alpha_hyp:
+        :param theta_hyp:
+        """
+        super(BayesianUVExpHawkesProcess, self).__init__()
+
+        self.mu_hyp = mu_hyp
+        self.alpha_hyp = alpha_hyp
+        self.theta_hyp = theta_hyp
+
+        self._get_log_posterior = lambda t, T: self._get_log_posterior_pot_grad_fns(t, T, mu_hyp, alpha_hyp, theta_hyp)[0]
+        self._get_log_posterior_grad = lambda t, T: self._get_log_posterior_pot_grad_fns(t, T, mu_hyp, alpha_hyp, theta_hyp)[1]
+
+    @classmethod
+    def _get_log_posterior_pot_grad_fns(cls, t, T, mu_hyp, alpha_hyp, theta_hyp):
+        """
+        Get the log (unnormalized) posterior (and gradient) as a callable with function
         signature (mu, alpha, beta).
 
         :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
@@ -33,26 +50,48 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
         :param theta_hyp: tuple, hyperparameters for the prior for theta. (k, theta) for the shape-scale
         parameterization of the Gamma distribution
 
-        :return: callable, a function with signature (mu, alpha, theta) for evaluating the log unnormalized posterior
+        :return: tuple, callables, a function with signature (mu, alpha, theta) for evaluating
+        the log unnormalized posterior (and its gradient)
         """
+        t, T = cls._prep_t_T(t, T)
+
+        def f0(x):
+            mu, a, th = x[0], x[1], x[2]
+            res = uv_exp_ll(t, mu, a, th, T)
+
+            res += gamma.logpdf(mu, mu_hyp[0], scale=mu_hyp[1]) \
+                + gamma.logpdf(th, theta_hyp[0], scale=theta_hyp[1]) \
+                + beta.logpdf(a, alpha_hyp[0], alpha_hyp[1])
+
+            return res
+
+        def g0(x):
+            mu, a, th = x[0], x[1], x[2]
+            res = uv_exp_ll_grad(t, mu, a, th, T)
+
+            res += (mu_hyp[0] - 1) / mu - 1. / mu_hyp[1] \
+                   + (theta_hyp[0] - 1) / th - 1. / theta_hyp[1] \
+                   + (alpha_hyp[0] - 1) / a - (alpha_hyp[1] - 1) / (1 - a)
+
+            return res
+
+        return f0, g0
+
+    def log_posterior_with_params(self, t, mu, alpha, theta, T=None):
+        """Evaluate the log potential (unnormalized posterior)"""
         t, T = self._prep_t_T(t, T)
+        return self._get_log_posterior(t, T)([mu, alpha, theta])
 
-        pr_alpha = cmake_beta_logpdf(*alpha_hyp)
-        pr_mu, pr_theta = cmake_gamma_logpdf(*mu_hyp), cmake_gamma_logpdf(*theta_hyp)
-
-        def f0(mu, a, th):
-            return uv_exp_ll(t, mu, a, th, T) + pr_alpha(a) + pr_mu(mu) + pr_theta(th)
-
-        return f0
-
-    def fit(self):
+    def fit(self, t, T=None, **kwargs):
         """
         Get the MAP estimate via gradient descent
         :return:
         """
+        t, T = self._prep_t_T(t, T)
+
         pass
 
-    def run_inference(self):
+    def sample_posterior(self):
         """
         Get samples from the posterior via MCMC
         :return:
