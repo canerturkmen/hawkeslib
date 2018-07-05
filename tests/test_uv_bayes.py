@@ -6,6 +6,7 @@ import unittest as ut
 
 from scipy.stats import beta, gamma
 
+from ..model.uv_exp import UnivariateExpHawkesProcess
 from ..model.uv_bayes import BayesianUVExpHawkesProcess
 from ..model.c.c_uv_bayes  import cmake_gamma_logpdf, cmake_beta_logpdf
 
@@ -90,5 +91,51 @@ class TestUVExpBayesLogPosterior(ut.TestCase):
         ll1 = self.bhp.log_posterior_with_params(A, .5, .6, 7., A[-1])
 
         self.assertAlmostEqual(ll0, ll1)
+
+
+class TestUVExpBayesMAP(ut.TestCase):
+
+    def setUp(self):
+        fpath = os.path.join(os.path.dirname(__file__), 'tfx_fixture.npy')
+        self.arr = np.load(fpath)  # test fixture
+
+        self.bhp = BayesianUVExpHawkesProcess((1., 5.), (1, 1), (1., 5.))
+
+    def test_diffuse_prior_map_close_to_mle(self):
+        A = self.arr
+        bhp2 = BayesianUVExpHawkesProcess((1, 10000), (1, 1), (1, 1e5))
+        hp = UnivariateExpHawkesProcess()
+
+        res = bhp2._fit_grad_desc(A, A[-1])
+        res2 = hp._fit_grad_desc(A, A[-1])
+
+        np.testing.assert_allclose(res.x, res2.x, rtol=.005)
+
+    def test_small_data_map_differs(self):
+        # todo: failing probabilistically!
+        A = self.arr[:50]
+        res = self.bhp._fit_grad_desc(A, A[-1])
+
+        hp = UnivariateExpHawkesProcess()
+        res2 = hp._fit_grad_desc(A, A[-1])
+
+        error = np.linalg.norm(res.x - res2.x, ord=1)
+        assert error > .1, "Error smaller than .1!" + str(res.x) + str(res2.x)
+
+    def test_num_gradient_0_at_map(self):
+        # todo: failing probabilistically
+        A = self.arr[:500]
+        res = self.bhp._fit_grad_desc(A, A[-1])
+
+        f = self.bhp._get_log_posterior(A, A[-1])
+
+        # g = nd.Gradient(f)(res.x)
+        g = self.bhp._get_log_posterior_grad(A, A[-1])(res.x)
+
+        assert np.linalg.norm(g, ord=2) < 10, "Gradient not zero!" + str(g) + str(res.x)
+        np.testing.assert_allclose(np.array([0.0099429, 0.59019621, 0.16108526]), res.x, rtol=.1)
+
+    def test_fit_sets_params(self):
+        pass
 
 
