@@ -5,6 +5,32 @@ from .uv_exp import UnivariateExpHawkesProcess
 from scipy.stats import gamma, beta
 from scipy.optimize import minimize
 
+import theano as th
+from theano import tensor as tt
+import pymc3 as pm
+
+
+class HPLLOp(th.Op):
+    """
+    Theano op that implements the log-likelihood function of a univariate
+    exponential Hawkes Process
+    """
+    __props__ = ()
+
+    itypes = [tt.dscalar, tt.dscalar, tt.dscalar]
+    otypes = [tt.dscalar]
+
+    def __init__(self, t, T):
+        super(HPLLOp, self).__init__()
+        self.t = t
+        self.T = T
+
+    def perform(self, node, inputs, output_storage):
+        x = inputs
+        m = output_storage[0]
+        ll = uv_exp_ll(self.t, x[0], x[1], x[2], self.T)
+        m[0] = np.array(ll)
+
 
 class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
     """
@@ -157,12 +183,35 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
 
         return ll
 
-    def sample_posterior(self):
+    def sample_posterior(self, t, T, n_samp, n_burnin=None):
         """
         Get samples from the posterior via MCMC
         :return:
         """
-        pass
+
+        t, T = self._prep_t_T(t, T)
+
+        if n_burnin is None:
+            n_burnin = int(n_samp / 5)
+
+        with pm.Model() as model:
+            mu = pm.Gamma("mu", alpha=self.mu_hyp[0], beta=1. / self.mu_hyp[1])
+            theta = pm.Gamma("theta", alpha=self.theta_hyp[0], beta=1. / self.theta_hyp[1])
+            alpha = pm.Beta("alpha", alpha=self.alpha_hyp[0], beta=self.alpha_hyp[1])
+
+            op = HPLLOp(t, T)
+
+            def uvexpll(v):
+                op(mu, alpha, theta)
+
+            a = pm.Deterministic('a', op(mu, alpha, theta))
+
+            llop = pm.Potential('ll', a)
+
+            trace = pm.sample(n_samp, step=pm.Metropolis(), cores=1, nchains=1)
+            burned_trace = trace[n_burnin:]
+
+        return burned_trace
 
     def marginal_likelihood(self, t, T=None):
         return self.get_marginal_likelihood(t, T)
