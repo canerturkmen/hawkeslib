@@ -1,5 +1,5 @@
 import numpy as np
-
+import numdifftools as nd
 from .c.c_uv_exp import uv_exp_ll, uv_exp_ll_grad
 from .uv_exp import UnivariateExpHawkesProcess
 from scipy.stats import gamma, beta
@@ -70,13 +70,26 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
             mu, a, th = x[0], x[1], x[2]
             res = uv_exp_ll_grad(t, mu, a, th, T)
 
-            res += (mu_hyp[0] - 1) / mu - 1. / mu_hyp[1] \
-                   + (theta_hyp[0] - 1) / th - 1. / theta_hyp[1] \
-                   + (alpha_hyp[0] - 1) / a - (alpha_hyp[1] - 1) / (1 - a)
+            res[0] += (mu_hyp[0] - 1) / mu - 1. / mu_hyp[1]
+            res[1] += (alpha_hyp[0] - 1) / a - (alpha_hyp[1] - 1) / (1 - a)
+            res[2] += (theta_hyp[0] - 1) / th - 1. / theta_hyp[1]
 
             return res
 
         return f0, g0
+
+    def get_marginal_likelihood(self, t, T = None):
+        """calculate marginal likelihood using Laplace's approximation"""
+        t, T = self._prep_t_T(t, T)
+
+        f = self._get_log_posterior(t, T)
+        g = self._get_log_posterior_grad(t, T)
+
+        xopt = np.array(self.get_params())
+        # xopt = self._fit_grad_desc(t, T).x
+        H = nd.Jacobian(g)(xopt)
+
+        return f(xopt) + 1.5 * np.log(2 * np.pi) - .5 * np.linalg.slogdet(H)[1]
 
     def _fit_grad_desc(self, t, T=None):
         """
@@ -89,7 +102,7 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
         :return: the optimization result
         :rtype: scipy.optimize.optimize.OptimizeResult
         """
-
+        t, T = self._prep_t_T(t, T)
         N = len(t)
 
         ress = []
@@ -97,29 +110,31 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
         f = self._get_log_posterior(t, T)
         g = self._get_log_posterior_grad(t, T)
 
-        # due to a convergence problem, we reiterate until the unconditional mean starts making sense
-        for epoch in range(5):
-            # estimate starting mu via the unconditional sample formula assuming
-            # $\alpha \approx 0.2$
-            mu0 = N * 0.8 / T
+        best_minres = None
+        best_ll = np.inf
 
-            # initialize other parameters randomly
-            a0, th0 = np.random.rand(2)
+        # due to problems in conversion, we run multistart
+        for epoch in range(10):
+            # draw from the priors for initializing the algorithm
+            mu0 = np.random.gamma(self.mu_hyp[0], scale=self.mu_hyp[1])
+            th0 = np.random.gamma(self.theta_hyp[0], scale=self.theta_hyp[1])
+            a0 = np.random.beta(self.alpha_hyp[0], self.alpha_hyp[1])
 
             minres = minimize(lambda x: -f(x), x0=np.array([mu0, a0, th0]),
                               jac=lambda x: -g(x),
                               bounds=[(1e-5, None), (1e-5, 1), (1e-5, None)],
-                              method="L-BFGS-B", options={"disp": True, "ftol": 1e-10, "gtol": 1e-8})
+                              method="L-BFGS-B", options={"disp": True, "ftol": 1e-8, "gtol": 1e-8})
 
             ress.append(minres)
             mu, a, _ = minres.x
 
-            # take the unconditional mean and see if it makes sense
-            Napprox = mu * T / (1 - a)
-            if abs(Napprox - N)/N < .01:  # if the approximation error is in range, break
-                break
+            print "try %d" % epoch, minres.x, minres.fun
 
-        return minres
+            if minres.fun < best_ll:
+                best_ll = minres.fun
+                best_minres = minres
+
+        return best_minres
 
     def log_posterior_with_params(self, t, mu, alpha, theta, T=None):
         """Evaluate the log potential (unnormalized posterior)"""
@@ -148,3 +163,6 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
         :return:
         """
         pass
+
+    def marginal_likelihood(self, t, T=None):
+        return self.get_marginal_likelihood(t, T)

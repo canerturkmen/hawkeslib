@@ -39,12 +39,12 @@ class BayesianPoissonTests(ut.TestCase):
         self.T = 22.
 
     def test_log_posterior(self):
-        logpot = self.pp._get_log_posterior_pot(self.a, self.T, self.pp._mu_hyp)
+        logpot = self.pp._get_log_posterior_pot(self.a, self.T, self.pp.mu_hyp)
 
         self.assertAlmostEqual(logpot(5.), -104.22966688651529)
 
     def test_map_fit(self):
-        logpot = self.pp._get_log_posterior_pot(self.a, self.T, self.pp._mu_hyp)
+        logpot = self.pp._get_log_posterior_pot(self.a, self.T, self.pp.mu_hyp)
 
         # fmin
         res = fmin(lambda x: -logpot(x), 1.)

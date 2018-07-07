@@ -76,7 +76,7 @@ class BayesianPoissonProcess(PoissonProcess):
 
     def __init__(self, mu_hyp):
         super(BayesianPoissonProcess, self).__init__()
-        self._mu_hyp = mu_hyp
+        self.mu_hyp = mu_hyp
 
     @classmethod
     def _get_log_posterior_pot(cls, t, T, mu_hyp):
@@ -138,14 +138,18 @@ class BayesianPoissonProcess(PoissonProcess):
         :return: float, log-unnormalized posterior of the maximizer
         """
         t, T = self._prep_t_T(t, T)
-        k, theta = self._mu_hyp
+        k, theta = self.mu_hyp
 
         mustar = (float(len(t)) + k - 1) / (T + 1. / theta)
         self.set_params(mustar)
 
-        logpot = self._get_log_posterior_pot(t, T, self._mu_hyp)
+        logpot = self._get_log_posterior_pot(t, T, self.mu_hyp)
 
         return logpot(mustar)
+
+    def marginal_likelihood(self, t, T=None):
+        t, T = self._prep_t_T(t, T)
+        return self._get_marginal_likelihood(t, T, self.mu_hyp)
 
     def sample_posterior(self, n_samp, t, T=None):
         """
@@ -160,6 +164,6 @@ class BayesianPoissonProcess(PoissonProcess):
         """
         t, T = self._prep_t_T(t, T)
         N = len(t)
-        k, theta = self._mu_hyp
+        k, theta = self.mu_hyp
 
         return np.random.gamma(k + N, 1. / (T + 1. / theta), size=n_samp)
