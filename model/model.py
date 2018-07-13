@@ -7,8 +7,6 @@ class PointProcess(object):
     Defines common interface for all point process implementations.
     """
 
-    params = None
-
     @classmethod
     def _assert_good_t_T(cls, t, T):
         if not np.all(t >= 0):

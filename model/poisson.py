@@ -25,10 +25,12 @@ class PoissonProcess(PointProcess):
         Calculate the poisson process log likelihood of a finite realization observed in the interval
         ..math:`[0,T)`
 
-        :param t: finite realization (timestamps) of the process
+        :param t: realization of the process (timestamps)
         :param mu: the constant intensity parameter
-        :param T: the maximum time for which the observation was made
-        :return: float, log-likelihood
+        :param T: the maximum time
+
+        :return: log-likelihood
+        :rtype: float
         """
         t, T = cls._prep_t_T(t, T)
         return -mu * T + len(t) * np.log(mu)
@@ -44,9 +46,12 @@ class PoissonProcess(PointProcess):
     def log_likelihood(self, t, T=None):
         """
         Log likelihood, given parameters
-        :param t: finite realization (timestamps) of the process
-        :param T: the maximum time for which the observation was made
-        :return: float, log-likelihood
+
+        :param t: realization of the process (timestamps)
+        :param T: the maximum time
+
+        :return: log-likelihood
+        :rtype: float
         """
         mu = self.get_params()
         return self.log_likelihood_with_params(t, mu, T)
@@ -68,6 +73,9 @@ class PoissonProcess(PointProcess):
 
         return self.log_likelihood(t, T)
 
+    def sample(self, T):
+        raise NotImplementedError("The sampler for Poisson processes was not implemented")
+
 
 class BayesianPoissonProcess(PoissonProcess, BayesianPointProcessMixin):
     """
@@ -75,6 +83,11 @@ class BayesianPoissonProcess(PoissonProcess, BayesianPointProcessMixin):
     """
 
     def __init__(self, mu_hyp):
+        """
+        Initialize a BayesianPoissonProcess
+        :param mu_hyp: tuple, hyperparameters for the prior for mu. (k, theta) for the shape-scale parameterization of
+        the Gamma distribution
+        """
         super(BayesianPoissonProcess, self).__init__()
         self.mu_hyp = mu_hyp
 

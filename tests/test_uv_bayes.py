@@ -65,8 +65,8 @@ class TestUVExpBayesLogPosterior(ut.TestCase):
 
     def test_gradient_correct_finite_difference(self):
         A = self.arr
-        f = self.bhp._get_log_posterior(A, A[-1])
-        g = self.bhp._get_log_posterior_grad(A, A[-1])
+        f = self.bhp._log_posterior(A, A[-1])
+        g = self.bhp._log_posterior_grad(A, A[-1])
 
         gr_numeric = nd.Gradient(f)([.3, .2, 5.])
         gr_manual = g([.3, .2, 5.])
@@ -127,10 +127,10 @@ class TestUVExpBayesMAP(ut.TestCase):
         A = self.arr[:500]
         res = self.bhp._fit_grad_desc(A, A[-1])
 
-        f = self.bhp._get_log_posterior(A, A[-1])
+        f = self.bhp._log_posterior(A, A[-1])
 
         # g = nd.Gradient(f)(res.x)
-        g = self.bhp._get_log_posterior_grad(A, A[-1])(res.x)
+        g = self.bhp._log_posterior_grad(A, A[-1])(res.x)
 
         assert np.linalg.norm(g, ord=2) < 10, "Gradient not zero!" + str(g) + str(res.x)
         np.testing.assert_allclose(np.array([0.0099429, 0.59019621, 0.16108526]), res.x, rtol=.1)

@@ -1,5 +1,7 @@
 import numpy as np
 import numdifftools as nd
+
+from .model import BayesianPointProcessMixin
 from .c.c_uv_exp import uv_exp_ll, uv_exp_ll_grad
 from .uv_exp import UnivariateExpHawkesProcess
 from scipy.stats import gamma, beta
@@ -32,7 +34,7 @@ class HPLLOp(th.Op):
         m[0] = np.array(ll)
 
 
-class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
+class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProcessMixin):
     """
     This class implements a "Bayesian" version of the univariate HP model with exponential
     decay. Specifically one with the conditional intensity function
@@ -62,8 +64,8 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
         self.alpha_hyp = alpha_hyp
         self.theta_hyp = theta_hyp
 
-        self._get_log_posterior = lambda t, T: self._get_log_posterior_pot_grad_fns(t, T, mu_hyp, alpha_hyp, theta_hyp)[0]
-        self._get_log_posterior_grad = lambda t, T: self._get_log_posterior_pot_grad_fns(t, T, mu_hyp, alpha_hyp, theta_hyp)[1]
+        self._log_posterior = lambda t, T: self._get_log_posterior_pot_grad_fns(t, T, mu_hyp, alpha_hyp, theta_hyp)[0]
+        self._log_posterior_grad = lambda t, T: self._get_log_posterior_pot_grad_fns(t, T, mu_hyp, alpha_hyp, theta_hyp)[1]
 
     @classmethod
     def _get_log_posterior_pot_grad_fns(cls, t, T, mu_hyp, alpha_hyp, theta_hyp):
@@ -126,8 +128,8 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
 
         ress = []
 
-        f = self._get_log_posterior(t, T)
-        g = self._get_log_posterior_grad(t, T)
+        f = self._log_posterior(t, T)
+        g = self._log_posterior_grad(t, T)
 
         best_minres = None
         best_ll = np.inf
@@ -165,8 +167,8 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
         """
         t, T = self._prep_t_T(t, T)
 
-        f = self._get_log_posterior(t, T)
-        g = self._get_log_posterior_grad(t, T)
+        f = self._log_posterior(t, T)
+        g = self._log_posterior_grad(t, T)
 
         xopt = np.array(self.get_params())
         # xopt = self._fit_grad_desc(t, T).x
@@ -189,7 +191,22 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
         :return: the log unnormalized posterior for sample t, under parameters mu, alpha, theta
         """
         t, T = self._prep_t_T(t, T)
-        return self._get_log_posterior(t, T)([mu, alpha, theta])
+        return self._log_posterior(t, T)([mu, alpha, theta])
+
+    def log_posterior(self, t, T=None):
+        """
+        Get the log unnormalized posterior for a finite realization from a Bayesian HP
+
+        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
+        sorted (asc). dtype must be float.
+        :param T: (optional) maximum time. If None, the last occurrence time will be taken.
+
+        :rtype: float
+        :return: the log unnormalized posterior for sample t, under parameters mu, alpha, theta
+        """
+        t, T = self._prep_t_T(t, T)
+        mu, alpha, theta = self.get_params()
+        return self._log_posterior(t, T)([mu, alpha, theta])
 
     def fit(self, t, T=None, **kwargs):
         """
