@@ -6,7 +6,7 @@ import numpy as np
 from scipy.special import gammaln
 
 from .c.c_uv_bayes import cmake_gamma_logpdf
-from .model import PointProcess
+from .model import PointProcess, BayesianPointProcessMixin
 
 
 class PoissonProcess(PointProcess):
@@ -69,7 +69,7 @@ class PoissonProcess(PointProcess):
         return self.log_likelihood(t, T)
 
 
-class BayesianPoissonProcess(PoissonProcess):
+class BayesianPoissonProcess(PoissonProcess, BayesianPointProcessMixin):
     """
     Implements a "Bayesian" version of the temporal Poisson process with a conjugate Gamma prior
     """

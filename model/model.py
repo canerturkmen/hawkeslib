@@ -4,8 +4,7 @@ import numpy as np
 
 class PointProcess(object):
     """
-    Abstract class that defines common interface for all point process
-    implementations.
+    Defines common interface for all point process implementations.
     """
 
     params = None
@@ -29,45 +28,57 @@ class PointProcess(object):
 
         return t, T
 
+    @classmethod
+    @abc.abstractmethod
+    def log_likelihood_with_params(cls, *args):
+        """
+        Calculate log likelihood function under the model for the given parameters
+        """
+        pass
+
     @abc.abstractmethod
     def sample(self, T):
         """
         Generate unconditional forward samples from the point process
 
-        :returns: numpy arrays for times (t_n) and marks (c_n)
-        :rtype: numpy.array, numpy.array
+        :returns: samples
+        :rtype: numpy.array
         """
         pass
 
     @abc.abstractmethod
-    def conditional_sample(self, t_n, c_n, T):
-        """
-        Given a series of observations (t_n, c_n), draw a forward sample from the end of the
-        series for the next T time steps.
-
-        :returns: numpy arrays for times (t_n) and marks (c_n)
-        :rtype: numpy.array, numpy.array
-        """
+    def conditional_sample(self, t, T):
         pass
 
     @abc.abstractmethod
     def log_likelihood(self, *args):
         """
-        Calculate log likelihood function under the model for the given
-        :param t_n:
-        :param c_n:
-        :return: log likelihood
-        :rtype: float
+        Calculate log likelihood function under the model fit
         """
         pass
 
     @abc.abstractmethod
     def fit(self, *args):
-        """
-
-        """
         pass
 
-    def perplexity(self, t_n, c_n):
-        ll = self.log_likelihood(t_n, c_n)
-        return np.exp(-ll / len(t_n))
+
+class BayesianPointProcessMixin:
+
+    @classmethod
+    @abc.abstractmethod
+    def log_posterior_with_params(self, *args):
+        pass
+
+    @abc.abstractmethod
+    def log_posterior(self, t, T=None):
+        pass
+
+    @abc.abstractmethod
+    def marginal_likelihood(self, t, T=None):
+        pass
+
+    @abc.abstractmethod
+    def sample_posterior(self, t, T, n_samp, n_burnin=None):
+        pass
+
+
