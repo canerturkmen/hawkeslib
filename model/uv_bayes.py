@@ -43,15 +43,18 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
     where we take Gamma priors for :math:`\mu, \theta`, and a Beta prior for :math:`\alpha`.
 
     The hyperparameters to the appropriate Gamma and Beta priors are given during initialization, and
-    they are not inferred (e.g. through empirical Bayes).
+    they are not fitted (e.g. through empirical Bayes).
     """
 
     def __init__(self, mu_hyp, alpha_hyp, theta_hyp):
         """
         Initialize a Bayesian HP model
-        :param mu_hyp:
-        :param alpha_hyp:
-        :param theta_hyp:
+
+        :param mu_hyp: tuple, hyperparameters for the prior for mu. (k, theta) for the shape-scale parameterization of
+        the Gamma distribution
+        :param alpha_hyp: tuple, hyperparameters for the Beta prior for alpha. (a, b)
+        :param theta_hyp: tuple, hyperparameters for the prior for theta. (k, theta) for the shape-scale
+        parameterization of the Gamma distribution
         """
         super(BayesianUVExpHawkesProcess, self).__init__()
 
@@ -65,7 +68,7 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
     @classmethod
     def _get_log_posterior_pot_grad_fns(cls, t, T, mu_hyp, alpha_hyp, theta_hyp):
         """
-        Get the log (unnormalized) posterior (and gradient) as a callable with function
+        Get the log (unnormalized) posterior (and gradient) as functions with
         signature (mu, alpha, beta).
 
         :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
@@ -104,26 +107,16 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
 
         return f0, g0
 
-    def get_marginal_likelihood(self, t, T = None):
-        """calculate marginal likelihood using Laplace's approximation"""
-        t, T = self._prep_t_T(t, T)
-
-        f = self._get_log_posterior(t, T)
-        g = self._get_log_posterior_grad(t, T)
-
-        xopt = np.array(self.get_params())
-        # xopt = self._fit_grad_desc(t, T).x
-        H = nd.Jacobian(g)(xopt)
-
-        return f(xopt) + 1.5 * np.log(2 * np.pi) - .5 * np.linalg.slogdet(H)[1]
-
-    def _fit_grad_desc(self, t, T=None):
+    def _fit_grad_desc(self, t, T=None, nr_restarts=5):
         """
-        Given a bounded finite realization on [0, T], fit parameters with line search (L-BFGS-B).
+        Given a bounded finite realization on [0, T], fit parameters with line search (L-BFGS-B). The procedure
+        is usually unstable, which is why we use multiple random restarts. Each restart is a draw from the
+        prior.
 
         :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
         sorted (asc). dtype must be float.
         :param T: (optional) maximum time. If None, the last occurrence time will be taken.
+        :param nr_restarts: int, number of random restarts
 
         :return: the optimization result
         :rtype: scipy.optimize.optimize.OptimizeResult
@@ -140,7 +133,7 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
         best_ll = np.inf
 
         # due to problems in conversion, we run multistart
-        for epoch in range(10):
+        for epoch in range(nr_restarts):
             # draw from the priors for initializing the algorithm
             mu0 = np.random.gamma(self.mu_hyp[0], scale=self.mu_hyp[1])
             th0 = np.random.gamma(self.theta_hyp[0], scale=self.theta_hyp[1])
@@ -154,39 +147,85 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
             ress.append(minres)
             mu, a, _ = minres.x
 
-            print "try %d" % epoch, minres.x, minres.fun
-
             if minres.fun < best_ll:
                 best_ll = minres.fun
                 best_minres = minres
 
         return best_minres
 
+    def marginal_likelihood(self, t, T = None):
+        """
+        Calculate marginal likelihood using Laplace's approximation. This method calculates
+        uses a Gaussian approximation around the currently fit parameters (i.e. expects MAP
+        parameters to already have been fit).
+
+        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
+        sorted (asc). dtype must be float.
+        :param T: (optional) maximum time
+        """
+        t, T = self._prep_t_T(t, T)
+
+        f = self._get_log_posterior(t, T)
+        g = self._get_log_posterior_grad(t, T)
+
+        xopt = np.array(self.get_params())
+        # xopt = self._fit_grad_desc(t, T).x
+        H = nd.Jacobian(g)(xopt)
+
+        return f(xopt) + 1.5 * np.log(2 * np.pi) - .5 * np.linalg.slogdet(H)[1]
+
     def log_posterior_with_params(self, t, mu, alpha, theta, T=None):
-        """Evaluate the log potential (unnormalized posterior)"""
+        """
+        Evaluate the log potential (unnormalized posterior)
+
+        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
+        sorted (asc). dtype must be float.
+        :param mu: the exogenous intensity
+        :param alpha: the infectivity factor alpha
+        :param theta: intensity parameter of the delay density
+        :param T: (optional) maximum time. If None, the last occurrence time will be taken.
+
+        :rtype: float
+        :return: the log unnormalized posterior for sample t, under parameters mu, alpha, theta
+        """
         t, T = self._prep_t_T(t, T)
         return self._get_log_posterior(t, T)([mu, alpha, theta])
 
     def fit(self, t, T=None, **kwargs):
         """
-        Get the MAP estimate via gradient descent
-        :return:
+        Get the MAP estimate via gradient descent. The function takes an optional "nr_restarts" keyword argument
+        that sets the number of random restarts for the multistart gradient descent algorithm.
+
+        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
+        sorted (asc). dtype must be float.
+        :param T: (optional) maximum time
+
+        :return: the resulting log unnormalized posterior
+        :rtype: float
         """
         t, T = self._prep_t_T(t, T)
 
-        minres = self._fit_grad_desc(t, T)
+        minres = self._fit_grad_desc(t, T, nr_restarts=kwargs.get("nr_restarts", 5))
         params = minres.x
 
-        ll = self.log_likelihood_with_params(t, params[0], params[1], params[2], T)
+        lp = self.log_posterior_with_params(t, params[0], params[1], params[2], T)
 
         self.set_params(*params)
 
-        return ll
+        return lp
 
     def sample_posterior(self, t, T, n_samp, n_burnin=None):
         """
-        Get samples from the posterior via MCMC
-        :return:
+        Get samples from the posterior via random walk Metropolis using the pymc3 library.
+
+        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
+        sorted (asc). dtype must be float.
+        :param T: (optional) maximum time
+        :param n_samp: number of posterior samples to take
+        :param n_burnin: number of samples to discard (as the burn-in samples)
+
+        :rtype: pymc3.MultiTrace
+        :return: the posterior samples for mu, alpha and theta as a trace object
         """
 
         t, T = self._prep_t_T(t, T)
@@ -212,6 +251,3 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess):
             burned_trace = trace[n_burnin:]
 
         return burned_trace
-
-    def marginal_likelihood(self, t, T=None):
-        return self.get_marginal_likelihood(t, T)
