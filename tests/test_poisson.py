@@ -6,6 +6,7 @@ from cmath import log
 from scipy.optimize import fmin
 from scipy.stats import mode
 
+import mock
 
 class PoissonTests(ut.TestCase):
 
@@ -54,3 +55,22 @@ class BayesianPoissonTests(ut.TestCase):
         mu_fit = self.pp.get_params()
 
         self.assertAlmostEqual(res[0], mu_fit, places=4)
+
+    @mock.patch("fasthawkes.model.poisson.np.random.gamma")
+    def test_posterior_sample_correct_call(self, m):
+        self.pp.sample_posterior(100, self.a, self.T)
+        m.assert_called_with(len(self.a) + 2., 1. / (self.T + .5), size=100)
+
+    def test_marginal_likelihood_correct(self):
+        from scipy.integrate import quad
+
+        f0 = self.pp._get_log_posterior_pot(self.a, self.T, self.pp.mu_hyp)
+        pot = lambda x: np.exp(f0(x))
+
+        q = np.log(quad(pot, 0, 20))
+        ml = self.pp.marginal_likelihood(self.a, self.T)
+
+        self.assertAlmostEqual(q[0], ml, places=2)
+
+
+

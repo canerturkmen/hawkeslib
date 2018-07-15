@@ -144,7 +144,7 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProces
             minres = minimize(lambda x: -f(x), x0=np.array([mu0, a0, th0]),
                               jac=lambda x: -g(x),
                               bounds=[(1e-5, None), (1e-5, 1), (1e-5, None)],
-                              method="L-BFGS-B", options={"disp": True, "ftol": 1e-8, "gtol": 1e-8})
+                              method="L-BFGS-B", options={"disp": False, "ftol": 1e-8, "gtol": 1e-8})
 
             ress.append(minres)
             mu, a, _ = minres.x
@@ -157,13 +157,16 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProces
 
     def marginal_likelihood(self, t, T = None):
         """
-        Calculate marginal likelihood using Laplace's approximation. This method calculates
+        Calculate log marginal likelihood using Laplace's approximation. This method calculates
         uses a Gaussian approximation around the currently fit parameters (i.e. expects MAP
         parameters to already have been fit).
 
         :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
         sorted (asc). dtype must be float.
         :param T: (optional) maximum time
+
+        :return: the log marginal likelihood
+        :rtype: float
         """
         t, T = self._prep_t_T(t, T)
 

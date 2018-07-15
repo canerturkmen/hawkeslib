@@ -5,7 +5,6 @@ Tests for Univariate Hawkes processes
 import unittest as ut
 import mock
 import numpy as np
-import ddt
 import os
 
 from ..model.uv_exp import UnivariateExpHawkesProcess as UVHP

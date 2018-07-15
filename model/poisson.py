@@ -117,7 +117,7 @@ class BayesianPoissonProcess(PoissonProcess, BayesianPointProcessMixin):
     @classmethod
     def _get_marginal_likelihood(cls, t, T, mu_hyp):
         """
-        Take the marginal likelihood (evidence) analytically using the Gamma-Poisson conjugacy. This quantity is
+        Take the log marginal likelihood (evidence) analytically using the Gamma-Poisson conjugacy. This quantity is
         simply the integral over the posterior potential.
 
         .. math::
@@ -161,6 +161,15 @@ class BayesianPoissonProcess(PoissonProcess, BayesianPointProcessMixin):
         return logpot(mustar)
 
     def marginal_likelihood(self, t, T=None):
+        """
+        Take the log marginal likelihood (evidence) analytically using Gamma-Poisson conjugacy.
+
+        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
+        sorted (asc). dtype must be float.
+        :param T: (optional) maximum time
+
+        :return: float, the log marginal likelihood
+        """
         t, T = self._prep_t_T(t, T)
         return self._get_marginal_likelihood(t, T, self.mu_hyp)
 

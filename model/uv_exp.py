@@ -131,7 +131,7 @@ class UnivariateExpHawkesProcess(PointProcess):
                               x0=np.array([mu0, a0, th0]),
                               jac=lambda x: -uv_exp_ll_grad(t, x[0], x[1], x[2], T),
                               bounds=[(1e-5, None), (1e-5, 1), (1e-5, None)],
-                              method="L-BFGS-B", options={"disp": True, "ftol": 1e-10, "gtol": 1e-8})
+                              method="L-BFGS-B", options={"disp": False, "ftol": 1e-10, "gtol": 1e-8})
 
             ress.append(minres)
             mu, a, _ = minres.x
