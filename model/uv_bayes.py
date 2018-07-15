@@ -259,15 +259,10 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProces
             alpha = pm.Beta("alpha", alpha=self.alpha_hyp[0], beta=self.alpha_hyp[1])
 
             op = HPLLOp(t, T)
-
-            def uvexpll(v):
-                op(mu, alpha, theta)
-
             a = pm.Deterministic('a', op(mu, alpha, theta))
-
             llop = pm.Potential('ll', a)
 
-            trace = pm.sample(n_samp, step=pm.Metropolis(), cores=1, nchains=1)
-            burned_trace = trace[n_burnin:]
+            trace = pm.sample(n_samp, step=pm.Metropolis(), cores=1, nchains=1,
+                              tune=n_burnin, discard_tuned_samples=True)
 
-        return burned_trace
+        return trace[n_burnin:]

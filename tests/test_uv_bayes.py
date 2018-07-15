@@ -3,30 +3,29 @@ import os
 import numdifftools as nd
 import numpy as np
 import unittest as ut
+from mock import patch
 
 from scipy.stats import beta, gamma
 
+from model.c.c_uv_exp import uv_exp_ll
 from ..model.uv_exp import UnivariateExpHawkesProcess
-from ..model.uv_bayes import BayesianUVExpHawkesProcess
-from ..model.c.c_uv_bayes  import cmake_gamma_logpdf, cmake_beta_logpdf
+from ..model.uv_bayes import BayesianUVExpHawkesProcess, HPLLOp
+from ..model.c import c_uv_bayes
 
 
 class TestBayesHelpers(ut.TestCase):
 
     def test_gamma_prior(self):
         k, scale = 5., 7.
-
         sp = gamma.logpdf(6., k, scale=scale)
-        f0 = cmake_gamma_logpdf(k, scale)
+        f0 = c_uv_bayes.cmake_gamma_logpdf(k, scale)
 
         self.assertAlmostEqual(sp, f0(6.), places=4)
 
     def test_beta_prior(self):
         a, b = 3., 3.
-
         sp = beta.logpdf(.45, a, b)
-
-        f0 = cmake_beta_logpdf(a, b)
+        f0 = c_uv_bayes.cmake_beta_logpdf(a, b)
 
         self.assertAlmostEqual(sp, f0(.45), places=4)
 
@@ -99,7 +98,7 @@ class TestUVExpBayesMAP(ut.TestCase):
         fpath = os.path.join(os.path.dirname(__file__), 'tfx_fixture.npy')
         self.arr = np.load(fpath)  # test fixture
 
-        self.bhp = BayesianUVExpHawkesProcess((1., 5.), (1, 1), (1., 5.))
+        self.bhp = BayesianUVExpHawkesProcess((1., 1.), (1, 1), (1., 1.))
 
     def test_diffuse_prior_map_close_to_mle(self):
         A = self.arr
@@ -124,7 +123,7 @@ class TestUVExpBayesMAP(ut.TestCase):
     def test_fit_sets_params(self):
         A = self.arr[:500]
 
-        assert self.bhp._mu == None
+        assert self.bhp._mu is None
 
         self.bhp.fit(A, A[-1])
 
@@ -136,30 +135,82 @@ class TestUVExpBayesMAP(ut.TestCase):
         x = np.array([0.0099429, 0.59019621, 0.16108526])
         g = self.bhp._log_posterior_grad(A, A[-1])(x)
 
-        assert np.linalg.norm(g, ord=2) < 10, "Gradient not zero!" + str(g)
+        assert np.linalg.norm(g, ord=1) < 10, "Gradient not zero!" + str(g)
 
     def test_hp_ll_op_eval_ok(self):
-        pass
+        import theano as th
+
+        a = self.arr
+        T = a[-1]
+
+        op = HPLLOp(a, T)
+        x, y, z = th.tensor.dscalar(), th.tensor.dscalar(), th.tensor.dscalar()
+        f = th.function([x, y, z], op(x, y, z))
+
+        opresult = f(5, .2, 10.)
+        classresult = UnivariateExpHawkesProcess.log_likelihood_with_params(a, 5, .2, 10., T)
+
+        self.assertAlmostEqual(opresult, classresult)
 
     def test_marginal_likelihood_ok(self):
-        pass
+        a, T = self.arr, self.arr[-1]
+        self.bhp.fit(a, T)
+
+        ml = self.bhp.marginal_likelihood(a, T)
+        true = -44507.4
+
+        print ml, true, a, T
+        self.assertAlmostEqual(ml, true, places=1)
 
     def test_marginal_likelihood_nofit_raises(self):
-        pass
+        with self.assertRaises(AssertionError):
+            self.bhp.marginal_likelihood(self.arr, self.arr[-1])
 
     def test_fit_grad_0(self):
-        pass
+        a, T = self.arr, self.arr[-1]
+        self.bhp.fit(a, T)
+
+        g = self.bhp._log_posterior_grad(a, T)
+        m, al, th = self.bhp.get_params()
+
+        geval = g([m, al, th])
+        gnorm = np.linalg.norm(geval, ord=1)
+
+        assert gnorm < 20., \
+            "gradient norm is greater than 20: %s, %s, %s, %s" % (geval, m, al, th)
 
     def test_log_posterior_correct(self):
-        pass
+        a, T = self.arr, self.arr[-1]
+
+        prior2 = c_uv_bayes.cmake_beta_logpdf(1., 1.)
+        prior1 = c_uv_bayes.cmake_gamma_logpdf(1., 1.)
+
+        self.bhp.fit(a, T)
+
+        m, alpha, theta = self.bhp.get_params()
+
+        true_post = uv_exp_ll(a, m, alpha, theta, T) + prior2(alpha) + prior1(theta) + \
+                    prior1(m)
+
+        calc_post = self.bhp.log_posterior(a, T)
+
+        self.assertAlmostEqual(true_post, calc_post, places=2)
 
     def test_log_posterior_nofit_raises(self):
-        pass
+        with self.assertRaises(AssertionError):
+            self.bhp.log_posterior(self.arr, self.arr[-1])
 
     def test_log_posterior_with_params_correct(self):
-        pass
+        a, T = self.arr, self.arr[-1]
 
-    def test_sample_posterior_correct_model_setup(self):
-        pass
+        m, alpha, theta = 3., .2, 10.
 
+        prior2 = c_uv_bayes.cmake_beta_logpdf(1., 1.)
+        prior1 = c_uv_bayes.cmake_gamma_logpdf(1., 1.)
 
+        true_post = uv_exp_ll(a, m, alpha, theta, T) + prior2(alpha) + prior1(theta) +\
+            prior1(m)
+
+        calc_post = self.bhp.log_posterior_with_params(a, m, alpha, theta, T)
+
+        self.assertAlmostEqual(true_post, calc_post, places=2)
