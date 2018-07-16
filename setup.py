@@ -19,7 +19,3 @@ setup(
                              ])
 )
 
-# Extension("model/c/c_mv_exp", ["model/c/c_mv_exp.pyx"], include_dirs=[numpy.get_include()],
-#           libraries=["m"],
-#           extra_compile_args=["-O3", "-ffast-math", "-march=native", "-fopenmp"],
-#           extra_link_args=['-fopenmp'])

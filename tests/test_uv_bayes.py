@@ -3,7 +3,6 @@ import os
 import numdifftools as nd
 import numpy as np
 import unittest as ut
-from mock import patch
 
 from scipy.stats import beta, gamma
 
