@@ -6,7 +6,7 @@ import unittest as ut
 
 from scipy.stats import beta, gamma
 
-from model.c.c_uv_exp import uv_exp_ll
+from ..model.c import c_uv_exp
 from ..model.uv_exp import UnivariateExpHawkesProcess
 from ..model.uv_bayes import BayesianUVExpHawkesProcess, HPLLOp
 from ..model.c import c_uv_bayes
@@ -188,7 +188,7 @@ class TestUVExpBayesMAP(ut.TestCase):
 
         m, alpha, theta = self.bhp.get_params()
 
-        true_post = uv_exp_ll(a, m, alpha, theta, T) + prior2(alpha) + prior1(theta) + \
+        true_post = c_uv_exp.uv_exp_ll(a, m, alpha, theta, T) + prior2(alpha) + prior1(theta) + \
                     prior1(m)
 
         calc_post = self.bhp.log_posterior(a, T)
@@ -207,7 +207,7 @@ class TestUVExpBayesMAP(ut.TestCase):
         prior2 = c_uv_bayes.cmake_beta_logpdf(1., 1.)
         prior1 = c_uv_bayes.cmake_gamma_logpdf(1., 1.)
 
-        true_post = uv_exp_ll(a, m, alpha, theta, T) + prior2(alpha) + prior1(theta) +\
+        true_post = c_uv_exp.uv_exp_ll(a, m, alpha, theta, T) + prior2(alpha) + prior1(theta) +\
             prior1(m)
 
         calc_post = self.bhp.log_posterior_with_params(a, m, alpha, theta, T)
