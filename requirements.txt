@@ -3,3 +3,5 @@ cython
 scipy
 nose
 numdifftools
+theano
+pymc3
