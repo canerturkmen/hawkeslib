@@ -8,7 +8,7 @@ cdef extern from "math.h":
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def mv_exp_ll2(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
+def mv_exp_ll(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
               cnp.ndarray[ndim=1, dtype=long] c,
               cnp.ndarray[ndim=1, dtype=cnp.float64_t] mu,
               cnp.ndarray[ndim=2, dtype=cnp.float64_t] A, double theta, double T):
