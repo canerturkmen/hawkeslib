@@ -9,7 +9,6 @@ import cython
 import numpy as np
 cimport numpy as cnp
 from cython.parallel cimport prange
-import warnings
 
 ctypedef cnp.float64_t npfloat
 
@@ -26,7 +25,6 @@ cdef extern from "<vector>" namespace "std":
         void push_back(T&) nogil except+
         size_t size()
         T& operator[](size_t)
-
 
 cdef double uu() nogil:
     return <double> rand() / RAND_MAX
@@ -97,7 +95,6 @@ def uv_exp_ll_grad(cnp.ndarray[ndim=1, dtype=npfloat] t, double mu, double alpha
     :param T: the maximum time
     :return: the gradient as a numpy.array of shape (3,). Gradients w.r.t. mu, alpha, theta respectively
     """
-    #TODO: this is now dirty!
     cdef:
         double phi = 0., nphi = 0.
         double Calpha = 0., Ctheta = 0.
@@ -294,7 +291,7 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
 
                 # collect ESS
 
-                E1 += 1. / Z  #todo: this can be simplified (multp. mu moved to M-step)
+                E1 += 1. / Z
                 E2 += atz * phi
                 E3 += atz * ga
 
