@@ -38,7 +38,7 @@ def mv_exp_ll(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
     """
     cdef:
         int N = t.shape[0]
-        int K = np.unique(c).shape[0]
+        int K = mu.shape[0]
         int i, k
         long ci
         double ti

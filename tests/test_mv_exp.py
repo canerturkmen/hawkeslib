@@ -31,7 +31,7 @@ class MVExpBranchingSamplerTests(ut.TestCase):
 
     def test_mv_sample_diag_kernel_numbers_ok(self):
         K, T = 3, 10000
-        mu = np.random.rand(K)
+        mu = np.array([.5, .3, .2])
         A = np.eye(K) * .2
         # A[2, 0] = .5
         theta = 1.
@@ -49,7 +49,7 @@ class MVExpBranchingSamplerTests(ut.TestCase):
 
     def test_mv_sample_full_kernel_numbers_ok(self):
         K, T = 3, 10000
-        mu = np.random.rand(K)
+        mu = np.array([.5, .3, .2])
         A = np.eye(K) * .2
         A[2, 0] = .5
         A[0, 1] = .3
@@ -69,7 +69,7 @@ class MVExpBranchingSamplerTests(ut.TestCase):
 
     def test_uv_sample_matches_numbers(self):
         K, T = 1, 10000
-        mu = np.random.rand(K)
+        mu = np.array([.5])
         A = np.eye(K) * .2
         theta = 1.
 
@@ -84,10 +84,9 @@ class MVExpBranchingSamplerTests(ut.TestCase):
 
         self.assertLessEqual(devi, .1)
 
-
     def test_mv_sample_diag_kernel_uv_matches_numbers(self):
         K, T = 2, 10000
-        mu = np.random.rand(K)
+        mu = np.array([.5, .3])
         A = np.eye(K) * .3
         theta = 1.
 
