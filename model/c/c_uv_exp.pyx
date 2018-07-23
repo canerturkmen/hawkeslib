@@ -109,13 +109,13 @@ def uv_exp_ll_grad(cnp.ndarray[ndim=1, dtype=npfloat] t, double mu, double alpha
             ed = exp(-theta * d)
             F = 1 - exp(-theta * r)
 
-            nphi = ed * (-d * (1 + phi) + nphi)
+            nphi = ed * (d * (1 + phi) + nphi)
             phi = ed * (1 + phi)
             lda = mu + alpha * theta * phi
 
             nmu = nmu + 1. / lda
             nalpha = nalpha + theta * phi / lda
-            ntheta = ntheta + alpha * (phi + theta * nphi) / lda
+            ntheta = ntheta + alpha * (phi - theta * nphi) / lda
 
             Calpha = Calpha + F
             Ctheta = Ctheta + alpha * r * (1 - F)
@@ -176,6 +176,7 @@ def uv_exp_sample_ogata(double T, double mu, double alpha, double theta, double 
     return res
 
 
+@cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _get_offspring(double t, double alpha, double theta, double T):
@@ -223,6 +224,7 @@ def uv_exp_sample_branching(double T, double mu, double alpha, double theta):
     return P
 
 
+@cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxiter=500, double reltol=1e-5):
@@ -277,7 +279,7 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
                 ed = exp(-theta * d)  # log of the exp difference exp(-theta * d)
                 er = exp(-theta * r)  # log of the exp difference of time remaining (for the compensator)
 
-                ga = ed * (-d * (1 + phi) + ga)
+                ga = ed * (d * (1 + phi) + ga)
                 phi = ed * (1 + phi)
 
                 Z = mu + alpha * theta * phi
@@ -295,9 +297,8 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
             # M-step
 
             mu = mu * E1 / T
-            theta = E2 / (alpha * C2 - E3)
+            theta = E2 / (alpha * C2 + E3)
             alpha = E2 / C1
-
 
         # calculate observed data log likelihood
 
