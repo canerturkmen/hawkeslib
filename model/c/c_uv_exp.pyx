@@ -32,14 +32,6 @@ cdef double uu() nogil:
     return <double> rand() / RAND_MAX
 
 
-cdef double lsexp(double a, double b) nogil:
-    '''fast logsumexp'''
-    if a >= b:
-        return a + log(1 + exp(b - a))
-    else:
-        return b + log(1 + exp(a - b))
-
-
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def uv_exp_ll(cnp.ndarray[ndim=1, dtype=npfloat] t, double mu, double alpha, double theta, double T):
@@ -97,7 +89,6 @@ def uv_exp_ll_grad(cnp.ndarray[ndim=1, dtype=npfloat] t, double mu, double alpha
     :param T: the maximum time
     :return: the gradient as a numpy.array of shape (3,). Gradients w.r.t. mu, alpha, theta respectively
     """
-    #TODO: this is now dirty!
     cdef:
         double phi = 0., nphi = 0.
         double Calpha = 0., Ctheta = 0.
@@ -252,7 +243,7 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
         double mu, alpha, theta
         double phi, ga, E1, E2, E3, C1, C2
         double ed, er
-        double Z, atz, odll, odll_p, relimp
+        double Z, atz, odll = 0., odll_p = 0., relimp
         int i, j = 0, N = len(t)
 
     mu = N * 0.8 * (1 + (uu() - .5) / 10.) / T
@@ -294,7 +285,7 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
 
                 # collect ESS
 
-                E1 += 1. / Z  #todo: this can be simplified (multp. mu moved to M-step)
+                E1 += 1. / Z
                 E2 += atz * phi
                 E3 += atz * ga
 
