@@ -23,6 +23,34 @@ class MVExpLikelihoodTests(ut.TestCase):
 
         self.assertAlmostEqual(uvll, mvll, places=3)
 
+    def test_mv_ll_matches_naive(self):
+        N = 100
+        fpath = os.path.join(os.path.dirname(__file__), 'tfx_fixture.npy')
+        t = np.load(fpath)[:N]
+        c = np.random.choice([0,1,2], size=N)
+
+        K = 3
+        mu = np.random.rand(K)
+        A = np.random.rand(K, K) * .05 + np.eye(K) * .3
+        theta = 1.
+
+        T = t[-1]
+
+        # compute log likelihood naively
+        ll = -np.sum(mu) * T
+        F = np.zeros(K)
+        for i in range(N):
+            z = mu[c[i]]
+            for j in range(i):
+                z += A[c[j], c[i]] * theta * np.exp(-theta * (t[i] - t[j]))
+            ll += np.log(z)
+            F[c[i]] += 1 - np.exp(-theta * (T - t[i]))
+        ll -= A.T.dot(F).sum()
+
+        ll_lib = c_mv_exp.mv_exp_ll(t, c, mu, A, theta, T)
+
+        self.assertAlmostEqual(ll, ll_lib, delta=1.)
+
 
 class MVExpBranchingSamplerTests(ut.TestCase):
 

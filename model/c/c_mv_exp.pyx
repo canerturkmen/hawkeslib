@@ -2,6 +2,8 @@ import cython
 import numpy as np
 cimport numpy as cnp
 
+cnp.import_array()
+
 cdef extern from "math.h":
     double exp(double x) nogil
     double log(double x) nogil
@@ -59,11 +61,14 @@ def mv_exp_ll(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
             ci = c[i]
             ti = t[i]
 
-            dot = 0
             for k in range(K):
                 d[k] += ti - t[i-1]
                 ed[k] = exp(-theta * d[k])
-                phi[k] = ed[k] * (1 + phi[k])
+
+            phi[ci] = ed[ci] * (1 + phi[ci])
+
+            dot = 0
+            for k in range(K):
                 dot += A[k, ci] * phi[k]
 
             lda = mu[ci] + theta * dot
