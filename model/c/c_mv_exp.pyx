@@ -49,7 +49,7 @@ def mv_exp_ll(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
         cnp.ndarray[ndim=1, dtype=cnp.float64_t] d = np.ones(K) * np.inf
         cnp.ndarray[ndim=1, dtype=cnp.float64_t] ed = np.zeros(K)
         cnp.ndarray[ndim=1, dtype=cnp.float64_t] F = np.zeros(K)
-        double lJ = 0., lda = 0., dot = 0.
+        double lJ = 0., lda = 0., Aphi = 0.
 
     with nogil:
         # for t0
@@ -61,13 +61,13 @@ def mv_exp_ll(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
             ci = c[i]
             ti = t[i]
 
-            dot = 0
+            Aphi = 0
             for k in range(K):
                 d[k] += ti - t[i-1]
                 ed[k] = exp(-theta * d[k])
-                dot += A[k, ci] * ed[k] * (1 + phi[k])
+                Aphi += A[k, ci] * ed[k] * (1 + phi[k])
 
-            lda = mu[ci] + theta * dot
+            lda = mu[ci] + theta * Aphi
             lJ += log(lda)
 
             F[ci] += 1 - exp(-theta * (T - ti))
