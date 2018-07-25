@@ -49,7 +49,7 @@ class MVExpLikelihoodTests(ut.TestCase):
 
         ll_lib = c_mv_exp.mv_exp_ll(t, c, mu, A, theta, T)
 
-        self.assertAlmostEqual(ll, ll_lib, delta=1.)
+        self.assertAlmostEqual(ll, ll_lib, places=4)
 
 
 class MVExpBranchingSamplerTests(ut.TestCase):

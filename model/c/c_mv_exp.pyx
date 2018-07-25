@@ -61,21 +61,18 @@ def mv_exp_ll(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
             ci = c[i]
             ti = t[i]
 
+            dot = 0
             for k in range(K):
                 d[k] += ti - t[i-1]
                 ed[k] = exp(-theta * d[k])
-
-            phi[ci] = ed[ci] * (1 + phi[ci])
-
-            dot = 0
-            for k in range(K):
-                dot += A[k, ci] * phi[k]
+                dot += A[k, ci] * ed[k] * (1 + phi[k])
 
             lda = mu[ci] + theta * dot
+            lJ += log(lda)
 
             F[ci] += 1 - exp(-theta * (T - ti))
 
-            lJ += log(lda)
+            phi[ci] = ed[ci] * (1 + phi[ci])
             d[ci] = 0.
 
     return lJ + -np.sum(mu * T) - np.sum(A.T.dot(F))
