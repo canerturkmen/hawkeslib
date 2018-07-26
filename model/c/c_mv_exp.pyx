@@ -156,3 +156,116 @@ def mv_exp_sample_branching(double T,
     six = np.argsort(P, kind="mergesort")
 
     return P[six], C[six]
+
+@cython.cdivision(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def mv_exp_fit_em(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
+                  cnp.ndarray[ndim=1, dtype=long] c,
+                  double T,
+                  int maxiter=500, double reltol=1e-5):
+    """
+    Fit a multivariate Hawkes process with exponential decay using the Expectation-Maximization algorithm.
+
+    :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps
+    :param c: Marks of the events (must be labels between 0 .. K-1 for a process with K discrete marks)
+    :param T: the maximum time (i.e. the process was observed in the interval [0, T) )
+    :param maxiter: int, maximum number of EM iterations
+    :param reltol: double, the relative improvement tolerance to stop the algorithm
+    :return: tuple, (final log likelihood, (mu, A, theta), number of iterations)
+    """
+
+    cdef:
+        int K = np.unique(c).shape[0]
+        int i, j = 0, k = 0, N = t.shape[0]
+        long ci
+        double ti
+        double Aphi = 0., lda = 0.
+
+        cnp.ndarray[ndim=1, dtype=cnp.float64_t] mu = np.random.rand(K)
+        cnp.ndarray[ndim=2, dtype=cnp.float64_t] A = np.eye(K) * .2 + np.ones((K,K)) * .05
+        double theta = 1.
+
+        cnp.ndarray[ndim=1, dtype=cnp.float64_t] E1 = np.empty(K)
+        cnp.ndarray[ndim=2, dtype=cnp.float64_t] E2 = np.empty((K, K))
+        double E3 = 0., E2sum = 0.
+        cnp.ndarray[ndim=1, dtype=cnp.float64_t] C1 = np.empty(K)
+        cnp.ndarray[ndim=1, dtype=cnp.float64_t] C2 = np.empty(K)
+
+        cnp.ndarray[ndim=1, dtype=cnp.float64_t] phi = np.zeros(K)
+        cnp.ndarray[ndim=1, dtype=cnp.float64_t] nphi = np.zeros(K)
+        cnp.ndarray[ndim=1, dtype=cnp.float64_t] d = np.ones(K) * np.inf
+        cnp.ndarray[ndim=1, dtype=cnp.float64_t] ed = np.zeros(K)
+        double er, gamma
+        double odll, odll_p, relimp
+
+    odll_p = -np.inf
+
+    for j in range(maxiter):
+
+        # E-step
+
+        ci = c[0]
+
+        cnp.PyArray_FillWithScalar(E1, 0.)
+        cnp.PyArray_FillWithScalar(E2, 0.)
+        E3 = 0.
+        cnp.PyArray_FillWithScalar(C1, 0.)
+        cnp.PyArray_FillWithScalar(C2, 0.)
+
+        E1[ci] = 1. / mu[ci]
+        C1[ci] = 1 - exp(-theta * (T - t[0]))
+        C2[ci] = (T - t[0]) * exp(-theta * (T - t[0]))
+
+        cnp.PyArray_FillWithScalar(phi, 0.)
+        cnp.PyArray_FillWithScalar(nphi, 0.)
+
+        for i in range(1, N):
+            ci = c[i]
+            ti = t[i]
+
+            er = exp(-theta * (T - ti))
+
+            Aphi = 0
+            for k in range(K):
+                d[k] += ti - t[i-1]
+                ed[k] = exp(-theta * d[k])
+                Aphi += A[k, ci] * ed[k] * (1 + phi[k])
+
+            lda = mu[ci] + theta * Aphi
+
+            E1[ci] += mu[ci] / lda
+            for l in range(K):
+                E2[l, ci] += theta * A[l, ci] * ed[l] * (1 + phi[l]) / lda  # simplify with A.*theta ??
+
+                gamma = ed[l] * (d[l] * (1 + phi[l]) + nphi[l])
+                if gamma != gamma:
+                    gamma = 0
+
+                E3 += theta * A[l, ci] * gamma / lda  # todo: simplify with theta ??
+
+            C1[ci] += 1 - er
+            C2[ci] += (T - ti) * er
+
+            nphi[ci] = ed[ci] * (nphi[ci] + d[ci] * (1 + phi[ci]))  # todo: order?
+            phi[ci] = ed[ci] * (1 + phi[ci])
+            d[ci] = 0.
+
+        # M-step
+        theta = E2.sum() / (A.T.dot(C2).sum() + E3)  # todo: speed this up
+        for l in range(K):
+            mu[l] = E1[l] / T
+            for k in range(K):
+                A[l, k] = E2[l,k] / C1[l]
+
+        # calculate observed data log likelihood
+        odll = mv_exp_ll(t, c, mu, A, theta, T)
+        relimp = (odll - odll_p) / abs(odll_p)  # relative improvement
+        if relimp < -1e-5:
+            print odll_p, odll
+            raise Exception("Convergence problem, the log likelihood did not increase")
+        elif relimp < reltol:
+            break
+        odll_p = odll
+
+    return odll, (mu, A, theta), j
