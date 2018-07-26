@@ -128,3 +128,28 @@ class MVExpBranchingSamplerTests(ut.TestCase):
         devi = np.abs(Endt - Rndt) / Rndt
 
         self.assertLessEqual(devi, .1)
+
+
+class MVEMAlgorithmTests(ut.TestCase):
+
+    def setUp(self):
+
+        self.t = np.load(os.path.join(os.path.dirname(__file__), 'tfx_mvt.npy'))
+        self.c = np.load(os.path.join(os.path.dirname(__file__), 'tfx_mvc.npy'))
+        self.T = self.t[-1]
+
+    def test_em_runs_no_convergence_issue(self):
+
+        try:
+            c_mv_exp.mv_exp_fit_em(self.t, self.c, self.T, maxiter=100)
+        except Exception as e:
+            if "convergence" in e.message:
+                self.fail(e.message)
+
+    def test_em_runs_params_close(self):
+
+        _, p, _ = c_mv_exp.mv_exp_fit_em(self.t, self.c, self.T, maxiter=200, reltol=1e-6)
+
+        assert np.allclose(np.array([.2, .6]), p[0], rtol=0.2), p[0]
+        assert np.allclose(np.eye(2) * .4 + np.ones((2,2)) * .1, p[1], rtol=0.2)
+        self.assertAlmostEqual(1., p[2], delta=.2)

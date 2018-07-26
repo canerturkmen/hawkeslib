@@ -7,6 +7,7 @@ cnp.import_array()
 cdef extern from "math.h":
     double exp(double x) nogil
     double log(double x) nogil
+    bint isnan(double x) nogil
 
 cdef extern from "stdlib.h":
     double rand() nogil
@@ -157,6 +158,7 @@ def mv_exp_sample_branching(double T,
 
     return P[six], C[six]
 
+
 @cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -177,7 +179,7 @@ def mv_exp_fit_em(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
 
     cdef:
         int K = np.unique(c).shape[0]
-        int i, j = 0, k = 0, N = t.shape[0]
+        int i, j = 0, k = 0, N = t.shape[0], l
         long ci
         double ti
         double Aphi = 0., lda = 0.
@@ -239,7 +241,7 @@ def mv_exp_fit_em(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
                 E2[l, ci] += theta * A[l, ci] * ed[l] * (1 + phi[l]) / lda  # simplify with A.*theta ??
 
                 gamma = ed[l] * (d[l] * (1 + phi[l]) + nphi[l])
-                if gamma != gamma:
+                if isnan(gamma):
                     gamma = 0
 
                 E3 += theta * A[l, ci] * gamma / lda  # todo: simplify with theta ??
@@ -247,7 +249,7 @@ def mv_exp_fit_em(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
             C1[ci] += 1 - er
             C2[ci] += (T - ti) * er
 
-            nphi[ci] = ed[ci] * (nphi[ci] + d[ci] * (1 + phi[ci]))  # todo: order?
+            nphi[ci] = ed[ci] * (nphi[ci] + d[ci] * (1 + phi[ci]))
             phi[ci] = ed[ci] * (1 + phi[ci])
             d[ci] = 0.
 
