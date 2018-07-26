@@ -238,13 +238,13 @@ def mv_exp_fit_em(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
 
             E1[ci] += mu[ci] / lda
             for l in range(K):
-                E2[l, ci] += theta * A[l, ci] * ed[l] * (1 + phi[l]) / lda  # simplify with A.*theta ??
+                E2[l, ci] += ed[l] * (1 + phi[l]) / lda
 
                 gamma = ed[l] * (d[l] * (1 + phi[l]) + nphi[l])
                 if isnan(gamma):
                     gamma = 0
 
-                E3 += theta * A[l, ci] * gamma / lda  # todo: simplify with theta ??
+                E3 += A[l, ci] * gamma / lda
 
             C1[ci] += 1 - er
             C2[ci] += (T - ti) * er
@@ -254,7 +254,8 @@ def mv_exp_fit_em(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
             d[ci] = 0.
 
         # M-step
-        theta = E2.sum() / (A.T.dot(C2).sum() + E3)  # todo: speed this up
+        E2 = E2 * theta * A
+        theta = E2.sum() / (A.T.dot(C2).sum() + theta * E3) 
         for l in range(K):
             mu[l] = E1[l] / T
             for k in range(K):

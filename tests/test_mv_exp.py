@@ -2,7 +2,7 @@ import os
 import unittest as ut
 import numpy as np
 
-from ..model.c import c_mv_exp
+from ..model.c import c_mv_exp, c_uv_exp
 from .. import UnivariateExpHawkesProcess
 
 
@@ -146,10 +146,21 @@ class MVEMAlgorithmTests(ut.TestCase):
             if "convergence" in e.message:
                 self.fail(e.message)
 
-    def test_em_runs_params_close(self):
+    def test_em_params_close(self):
 
         _, p, _ = c_mv_exp.mv_exp_fit_em(self.t, self.c, self.T, maxiter=200, reltol=1e-6)
 
         assert np.allclose(np.array([.2, .6]), p[0], rtol=0.2), p[0]
         assert np.allclose(np.eye(2) * .4 + np.ones((2,2)) * .1, p[1], rtol=0.2)
         self.assertAlmostEqual(1., p[2], delta=.2)
+
+    def test_em_close_to_uv(self):
+
+        c = np.zeros(len(self.t), dtype=int)
+
+        _, p, _ = c_mv_exp.mv_exp_fit_em(self.t, c, self.T, maxiter=200, reltol=1e-6)
+        _, pu, _ = c_uv_exp.uv_exp_fit_em_base(self.t, self.T, maxiter=200, reltol=1e-6)
+
+        self.assertAlmostEqual(p[0][0], pu[0], delta=.05)
+        self.assertAlmostEqual(p[1][0][0], pu[1], delta=.05)
+        self.assertAlmostEqual(pu[2], p[2], delta=.05)
