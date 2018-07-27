@@ -9,7 +9,6 @@ import cython
 import numpy as np
 cimport numpy as cnp
 from cython.parallel cimport prange
-import warnings
 
 ctypedef cnp.float64_t npfloat
 
@@ -26,7 +25,6 @@ cdef extern from "<vector>" namespace "std":
         void push_back(T&) nogil except+
         size_t size()
         T& operator[](size_t)
-
 
 cdef double uu() nogil:
     return <double> rand() / RAND_MAX

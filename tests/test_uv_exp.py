@@ -238,5 +238,12 @@ class UVExpFittingTests(ut.TestCase):
 
         np.testing.assert_allclose(pars, [.006, .555, .1612], rtol=.05)
 
+    def test_fitter_no_unpack_error(self):
+        a = np.array([5., 6., 7., 8.])
 
+        try:
+            self.uv.fit(a, 10., method="em")
+        except ValueError as e:
+            if "to unpack" in e.message:
+                self.fail(e.message)
 
