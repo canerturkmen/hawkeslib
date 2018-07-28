@@ -36,27 +36,44 @@ class HPLLOp(th.Op):
 
 class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProcessMixin):
     """
-    This class implements a "Bayesian" version of the univariate HP model with exponential
-    decay. Specifically one with the conditional intensity function
+    This class inherits from :class:`fasthawkes.UnivariateExpHawkesProcess` and implements a
+    "Bayesian" univariate HP model with exponential delay density.
+
+    Specifically the model is determined by the conditional intensity function
 
     .. math::
-        \lambda^*(t) = \mu + \sum_{t_i < t} \alpha \theta \exp( - \theta (t - t_i))
+        \lambda^*(t) = \mu + \sum_{t_i < t} \\alpha \\theta \exp( - \\theta (t - t_i)),
 
-    where we take Gamma priors for :math:`\mu, \theta`, and a Beta prior for :math:`\alpha`.
+    and the prior distributions
 
-    The hyperparameters to the appropriate Gamma and Beta priors are given during initialization, and
-    they are not fitted (e.g. through empirical Bayes).
+    .. math::
+        \\begin{align}
+            \mu &\sim \\mathcal{G}(k_\mu, \\eta_\mu), \\\\
+            \\theta &\sim \\mathcal{G}(k_\\theta, \\eta_\\theta), \\\\
+            \\alpha &\sim \\mathcal{B}(a, b).
+        \\end{align}
+
+    Here, :math:`\\mathcal{G}` denotes the Gamma distribution in its "shape-scale" parameterization.
+    :math:`\\mathcal{B}` denotes the Beta distribution. See :class:`fasthawkes.UnivariateExpHawkesProcess`
+    and the tutorial for further details on the model and parameters.
+
+    The hyperparameters to the appropriate Gamma and Beta priors are given during initialization as ``mu_hyp``,
+    ``theta_hyp`` and ``alpha_hyp``, and they are not fitted (e.g. through empirical Bayes).
+
+    This class implements methods for sampling from the posterior (i.e. sampling parameters, not observations
+    from the posterior predictive --for now), calculating marginal likelihood (e.g., for computing Bayesian
+    hypothesis tests), and fitting maximum a posteriori (MAP) estimates.
     """
 
     def __init__(self, mu_hyp, alpha_hyp, theta_hyp):
         """
-        Initialize a Bayesian HP model
+        Initialize a Bayesian univariate HP model
 
-        :param mu_hyp: tuple, hyperparameters for the prior for mu. (k, theta) for the shape-scale parameterization of
-        the Gamma distribution
-        :param alpha_hyp: tuple, hyperparameters for the Beta prior for alpha. (a, b)
-        :param theta_hyp: tuple, hyperparameters for the prior for theta. (k, theta) for the shape-scale
-        parameterization of the Gamma distribution
+        :param tuple[float,float] mu_hyp: hyperparameters for the prior for mu. (k, eta) for the
+            shape-scale parameterization of the Gamma distribution
+        :param tuple[float,float] alpha_hyp: hyperparameters for the Beta prior for alpha. (a, b)
+        :param tuple[float,float] theta_hyp: hyperparameters for the prior for theta. (k, eta) for the shape-scale
+            parameterization of the Gamma distribution
         """
         super(BayesianUVExpHawkesProcess, self).__init__()
 
@@ -74,16 +91,16 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProces
         signature (mu, alpha, beta).
 
         :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
-        sorted (asc). dtype must be float.
+            sorted (asc). dtype must be float.
         :param T: (optional) maximum time
         :param mu_hyp: tuple, hyperparameters for the prior for mu. (k, theta) for the shape-scale parameterization of
-        the Gamma distribution
+            the Gamma distribution
         :param alpha_hyp: tuple, hyperparameters for the Beta prior for alpha. (a, b)
         :param theta_hyp: tuple, hyperparameters for the prior for theta. (k, theta) for the shape-scale
-        parameterization of the Gamma distribution
+            parameterization of the Gamma distribution
 
         :return: tuple, callables, a function with signature (mu, alpha, theta) for evaluating
-        the log unnormalized posterior (and its gradient)
+            the log unnormalized posterior (and its gradient)
         """
         t, T = cls._prep_t_T(t, T)
 
@@ -116,7 +133,7 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProces
         prior.
 
         :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
-        sorted (asc). dtype must be float.
+            sorted (asc). dtype must be float.
         :param T: (optional) maximum time. If None, the last occurrence time will be taken.
         :param nr_restarts: int, number of random restarts
 
@@ -157,13 +174,14 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProces
 
     def marginal_likelihood(self, t, T = None):
         """
-        Calculate log marginal likelihood using Laplace's approximation. This method calculates
-        uses a Gaussian approximation around the currently fit parameters (i.e. expects MAP
-        parameters to already have been fit).
+        Calculate log marginal likelihood of the process under given data, using Laplace's approximation.
+        This method uses a Gaussian approximation around the currently fit parameters (i.e. expects MAP
+        parameters to already have been fit, e.g. through :meth:`fit`).
 
-        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
-        sorted (asc). dtype must be float.
+        :param numpy.array[float] t: Observation timestamps of the process up to time T. 1-d array of timestamps.
+            must be sorted (asc)
         :param T: (optional) maximum time
+        :type T: float or None
 
         :return: the log marginal likelihood
         :rtype: float
@@ -181,31 +199,34 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProces
 
     def log_posterior_with_params(self, t, mu, alpha, theta, T=None):
         """
-        Evaluate the log potential (unnormalized posterior)
+        Evaluate the log potential (unnormalized posterior) of the process parameters ``mu``, ``alpha``,
+        ``theta``, under data ``t``, ``T``.
 
-        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
-        sorted (asc). dtype must be float.
-        :param mu: the exogenous intensity
-        :param alpha: the infectivity factor alpha
-        :param theta: intensity parameter of the delay density
-        :param T: (optional) maximum time. If None, the last occurrence time will be taken.
+        :param numpy.array[float] t: Observation timestamps of the process up to time T. 1-d array of timestamps.
+            must be sorted (asc)
+        :param float mu: the exogenous intensity
+        :param float alpha: the infectivity factor alpha
+        :param float theta: intensity parameter of the delay density
+        :param T: (optional) maximum time
+        :type T: float or None
 
         :rtype: float
-        :return: the log unnormalized posterior for sample t, under parameters mu, alpha, theta
+        :return: the log unnormalized posterior (log potential)
         """
         t, T = self._prep_t_T(t, T)
         return self._log_posterior(t, T)([mu, alpha, theta])
 
     def log_posterior(self, t, T=None):
         """
-        Get the log unnormalized posterior for a finite realization from a Bayesian HP
+        Get the log unnormalized posterior for parameters already fit, under observed timestamps ``t``.
 
-        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
-        sorted (asc). dtype must be float.
-        :param T: (optional) maximum time. If None, the last occurrence time will be taken.
+        :param numpy.array[float] t: Observation timestamps of the process up to time T. 1-d array of timestamps.
+            must be sorted (asc)
+        :param T: (optional) maximum time
+        :type T: float or None
 
         :rtype: float
-        :return: the log unnormalized posterior for sample t, under parameters mu, alpha, theta
+        :return: the log unnormalized posterior (log potential)
         """
         t, T = self._prep_t_T(t, T)
         mu, alpha, theta = self.get_params()
@@ -213,15 +234,26 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProces
 
     def fit(self, t, T=None, **kwargs):
         """
-        Get the MAP estimate via gradient descent. The function takes an optional "nr_restarts" keyword argument
-        that sets the number of random restarts for the multistart gradient descent algorithm.
+        Get the maximum a posteriori (MAP) estimate via gradient descent, and store it in the
+        ``BayesianUVExpHawkesProcess`` object.
 
-        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
-        sorted (asc). dtype must be float.
+        This function uses ``scipy``'s L-BFGS-B routine to fit the parameters. It also takes an optional
+        keyword argument ``nr_restarts`` that sets the number of random restarts for the multistart gradient
+        descent algorithm.
+
+        :param numpy.array[float] t: Observation timestamps of the process up to time T. 1-d array of timestamps.
+            must be sorted (asc)
         :param T: (optional) maximum time
-
-        :return: the resulting log unnormalized posterior
+        :type T: float or None
+        :param kwargs: see below.
+        :return: the resulting log unnormalized posterior (log potential) --for the parameters fit
         :rtype: float
+
+        **Keyword Arguments**
+
+        * *nr_restarts* (``int``) -- Optional, the number of random restarts of the GD algorithm.
+          The best log-posterior fit will be returned as the result. Defaults to 5.
+
         """
         t, T = self._prep_t_T(t, T)
 
@@ -236,13 +268,28 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProces
 
     def sample_posterior(self, t, T, n_samp, n_burnin=None):
         """
-        Get samples from the posterior via random walk Metropolis using the pymc3 library.
+        Get samples from the posterior, e.g. for posterior inference or computing Bayesian credible intervals.
+        This routine samples via the random walk Metropolis (RWM) algorithm using the ``pymc3`` library.
 
-        :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps. must be
-        sorted (asc). dtype must be float.
+        The function returns a ``pymc3.MultiTrace`` object that can be operated on simply like a ``numpy.array``.
+        Furthermore, ``pymc3`` can be used to create "traceplots". For example via
+
+        .. code-block:: python
+
+            from matplotlib import pyplot as plt
+            import pymc3
+
+            trace = uvb.fit(t, T)
+            pymc3.traceplot(trace["mu"])
+
+            plt.plot(trace["mu"], trace["alpha"])
+
+        :param numpy.array[float] t: Observation timestamps of the process up to time T. 1-d array of timestamps.
+            must be sorted (asc)
         :param T: (optional) maximum time
-        :param n_samp: number of posterior samples to take
-        :param n_burnin: number of samples to discard (as the burn-in samples)
+        :type T: float or None
+        :param int n_samp: number of posterior samples to take
+        :param int n_burnin: number of samples to discard (as the burn-in samples)
 
         :rtype: pymc3.MultiTrace
         :return: the posterior samples for mu, alpha and theta as a trace object

@@ -1,6 +1,7 @@
 # Welcome to `fasthawkes`
 
 [![Build Status](https://travis-ci.org/canerturkmen/fasthawkes.svg?branch=master)](https://travis-ci.org/canerturkmen/fasthawkes)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 `fasthawkes` started with the ambition of having a go-to implementation of plain-vanilla Hawkes processes (HP), i.e. those
 with factorized triggering kernels with exponential decay functions.

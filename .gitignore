@@ -6,3 +6,5 @@ build/
 *.c
 *.cpp
 .idea/
+
+docs/build/

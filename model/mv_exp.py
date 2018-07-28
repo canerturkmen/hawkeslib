@@ -8,17 +8,21 @@ from .c.c_mv_exp import mv_exp_ll, mv_exp_fit_em, mv_exp_sample_branching
 
 class MultivariateExpHawkesProcess(PointProcess):
     """
-    Implements a multivariate Hawkes process with exponential decay triggering kernel, with the conditional
+    Implements a multivariate Hawkes process with exponential delay density, with the conditional
     intensity function given by
 
     .. math::
-        \lambda^*_k(t) = \mu_k + \sum_{t_i < t} A(c_i, k) \theta \exp(-\theta (t - t_i))
+        \lambda^*_k(t) = \mu_k + \sum_{t_i < t} A(c_i, k) \\theta \exp(-\\theta (t - t_i))
 
     Here, :math:`c_i` refer to a set of discrete "marks". That is, the process is multivariate in the sense that it is
     made up of :math:`K` different processes, which :math:`c_i` and :math:`k` index.
     :math:`A` is a nonnegative matrix with spectral radius less than 1, known as the "infectivity matrix", and governs
-    the mutual excitation behavior between these processes. :math:`\mu_k` is the "base intensity" for each process
-    :math:`k`.
+    the mutual excitation behavior between these processes. For example, :math:`A_{l, k}` refers to the number
+    (in expectation) of further events of mark :math:`k` expected to be caused by each event with mark :math:`l`.
+    :math:`\mu_k` is the "base intensity" for each process :math:`k`.
+
+    This class implements methods for evaluating log likelihood, estimating parameters and taking forward samples
+    from such a process. As with most other methods in this library, the methods are implemented in Cython.
     """
 
     _mu = None
@@ -59,19 +63,19 @@ class MultivariateExpHawkesProcess(PointProcess):
         """
         Compute the log likelihood of a multivariate Hawkes process.
 
-        :param numpy.ndarray t: the timestamps of the observed occurrences, in an interval bounded by 0 and T. Must be
-            a 1-dimensional numpy.array in sorted order, with dtype float.
-        :param numpy.ndarray c: the marks of the observed occurrences. must take values in :math:`\{0, 1, ..., K\}` where
-            each value refers to which "process" the occurrence belongs to.
+        :param numpy.array[float] t: the timestamps of the observed occurrences, in an interval bounded by 0 and ``T``.
+            Must be a 1-dimensional numpy.array in sorted order
+        :param numpy.array[int] c: the marks of the observed occurrences. must take values in :math:`\{0, 1, ..., K\}`
+            where each value refers to which "process" the occurrence belongs to.
             Must be a 1-dimensional numpy.ndarray with the order
             corresponding to t. That is, if t[i] is the timestamp of an occurrence, c[i] is the corresponding mark.
-        :param numpy.ndarray mu: the base intensities :math:`mu_k`. ``mu[k]`` refers to the background intensity of
+        :param numpy.array[float] mu: the base intensities :math:`\mu_k`. ``mu[k]`` refers to the background intensity of
             occurrences with mark ``k``. Must be a nonnegative 1-dimensional numpy.array.
-        :param numpy.ndarray A: the infectivity matrix :math:`A`. ``A[l, k]`` refers to the mutual excitation behavior,
+        :param numpy.array[float] A: the infectivity matrix :math:`A`. ``A[l, k]`` refers to the mutual excitation behavior,
             *caused* by occurrences of mark ``l``, resulting in occurrences of mark ``k`` (note the **index order**
             here). Must be a nonnegative 2-dimensional numpy.array that corresponds to a matrix of spectral radius less
             than 1. That is, the operator norm (greatest eigenvalue) of the matrix should be strictly less than 1.
-        :param float theta: the delay parameter, governs the delay effect of the mutually exciting occurrences.
+        :param float theta: the delay parameter :math:`\\theta`, governs the delay effect of the mutually exciting occurrences.
             Corresponds to the rate (inverse of *scale*) parameter of an exponential distribution. Must be nonnegative.
         :param T: (optional) the upper bound of the observation interval. If not provided, the timestamp of
             the last occurrence will be taken
@@ -93,8 +97,8 @@ class MultivariateExpHawkesProcess(PointProcess):
         """
         Set parameters ``mu, A, theta``.
 
-        :param numpy.ndarray mu: the base intensities :math:`mu_k`. Must be a nonnegative 1-dimensional numpy.array.
-        :param numpy.ndarray A: the infectivity matrix :math:`A`.
+        :param numpy.array[float] mu: the base intensities :math:`mu_k`. Must be a nonnegative 1-dimensional numpy.array.
+        :param numpy.array[float] A: the infectivity matrix :math:`A`.
             Must be a nonnegative 2-dimensional numpy.array that corresponds to a matrix of spectral radius less
             than 1. That is, the operator norm (greatest eigenvalue) of the matrix should be strictly less than 1.
         :param float theta: the delay parameter, governs the delay effect of the mutually exciting occurrences.
@@ -108,7 +112,7 @@ class MultivariateExpHawkesProcess(PointProcess):
         before or parameters have been set.
 
         :returns: 3-tuple, corresponding to ``mu``, ``A``, ``theta``.
-        :rtype: tuple[numpy.ndarray, numpy.ndarray, float]
+        :rtype: tuple[numpy.array, numpy.array, float]
         """
         return self._fetch_params()
 
@@ -123,7 +127,7 @@ class MultivariateExpHawkesProcess(PointProcess):
         :param float T: the upper bound of the interval in which to sample.
 
         :returns: 2-tuple, corresponding to timestamps ``t``, and marks ``c``.
-        :rtype: tuple[numpy.ndarray[float], numpy.ndarray[long]]
+        :rtype: tuple[numpy.array[float], numpy.array[long]]
         """
         assert T > 0, "T should be a positive number"
         mu, A, theta = self._fetch_params()
@@ -134,17 +138,17 @@ class MultivariateExpHawkesProcess(PointProcess):
         Compute the log likelihood of fitted parameters of a  multivariate Hawkes process, under the data provided.
         Only works if the process has been ``fit`` before or parameters have been set.
 
-        :param numpy.ndarray t: the timestamps of the observed occurrences, in an interval bounded by 0 and T. Must be
-            a 1-dimensional numpy.array in sorted order, with dtype float.
-        :param numpy.ndarray c: the marks of the observed occurrences. must take values in :math:`\{0, 1, ..., K\}` where
-            each value refers to which "process" the occurrence belongs to.
+        :param numpy.array[float] t: the timestamps of the observed occurrences, in an interval bounded by 0 and ``T``.
+            Must be a 1-dimensional numpy.array in sorted order
+        :param numpy.array[int] c: the marks of the observed occurrences. must take values in :math:`\{0, 1, ..., K\}`
+            where each value refers to which "process" the occurrence belongs to.
             Must be a 1-dimensional numpy.ndarray with the order
             corresponding to t. That is, if t[i] is the timestamp of an occurrence, c[i] is the corresponding mark.
         :param T: (optional) the upper bound of the observation interval. If not provided, the timestamp of
             the last occurrence will be taken
         :type T: float or None
 
-        :return: log likelihood of the parameters under the data ``t, c, T``.
+        :return: log likelihood of the set parameters under the data ``t, c, T``.
         :rtype: float
         """
         mu, A, th = self._fetch_params()
@@ -153,13 +157,13 @@ class MultivariateExpHawkesProcess(PointProcess):
 
     def fit(self, t, c, T=None, **kwargs):
         """
-        Fit the parameters of the process given data ``t, c, T``, and set them. This routine uses the
+        Fit the parameters of the process given data ``t``, ``c``, ``T``, and set them. This routine uses the
         Expectation-Maximization (EM) algorithm.
 
-        :param numpy.ndarray t: the timestamps of the observed occurrences, in an interval bounded by 0 and T. Must be
-            a 1-dimensional numpy.array in sorted order, with dtype float.
-        :param numpy.ndarray c: the marks of the observed occurrences. must take values in :math:`\{0, 1, ..., K\}` where
-            each value refers to which "process" the occurrence belongs to.
+        :param numpy.array[float] t: the timestamps of the observed occurrences, in an interval bounded by 0 and ``T``.
+            Must be a 1-dimensional numpy.array in sorted order
+        :param numpy.array[int] c: the marks of the observed occurrences. must take values in :math:`\{0, 1, ..., K\}`
+            where each value refers to which "process" the occurrence belongs to.
             Must be a 1-dimensional numpy.ndarray with the order
             corresponding to t. That is, if t[i] is the timestamp of an occurrence, c[i] is the corresponding mark.
         :param T: (optional) the upper bound of the observation interval. If not provided, the timestamp of
@@ -170,7 +174,8 @@ class MultivariateExpHawkesProcess(PointProcess):
         :return: likelihood of the process under the fit parameters
         :rtype: float
 
-        :Keyword Arguments:
+        **Keyword Arguments**
+
         * *reltol* (``float``) --
           The relative log likelihood improvement used as a stopping condition. Defaults to ``1e-5``.
         * *maxiter* (``int``) --
