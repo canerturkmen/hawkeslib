@@ -19,6 +19,11 @@
 
 # -- Project information -----------------------------------------------------
 
+import sys
+import os
+
+sys.path.append(os.path.join(os.path.dirname(__file__), "../../"))
+
 project = u'hawkeslib'
 copyright = u'2018, Caner Turkmen'
 author = u'Caner Turkmen'
