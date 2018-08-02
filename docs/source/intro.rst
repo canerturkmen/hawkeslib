@@ -2,15 +2,15 @@ Introduction
 ================
 
 
-.. image:: https://travis-ci.org/canerturkmen/fasthawkes.svg?branch=master
-   :target: https://travis-ci.org/canerturkmen/fasthawkes
+.. image:: https://travis-ci.org/canerturkmen/hawkeslib.svg?branch=master
+   :target: https://travis-ci.org/canerturkmen/hawkeslib
 .. image:: https://img.shields.io/badge/License-MIT-yellow.svg
    :target: https://opensource.org/licenses/MIT
 
-About fasthawkes
+About hawkeslib
 ----------------
 
-Fasthawkes started with the ambition of presenting easy-to-use, well maintained
+hawkeslib started with the ambition of presenting easy-to-use, well maintained
 implementations of plain-vanilla Hawkes (self-exciting) processes [1]_ [2]_, a form of evolutionary
 temporal point processes that is increasingly put to use in a variety of domains.
 
@@ -33,7 +33,7 @@ After cloning via git, setup.py must be run to compile the Cython source.
 
 .. code-block:: bash
 
-   $ git clone git@github.com:canerturkmen/fasthawkes.git
+   $ git clone git@github.com:canerturkmen/hawkeslib.git
    $ python setup.py build_ext --inplace
 
 Currently, the library only supports python 2.7.

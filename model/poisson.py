@@ -1,5 +1,5 @@
 """
-Classes implementing a (homogenous) Poisson Process and a Bayesian version using the fasthawkes interface
+Classes implementing a (homogenous) Poisson Process and a Bayesian version using the hawkeslib interface
 """
 
 import numpy as np

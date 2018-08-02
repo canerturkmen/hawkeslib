@@ -26,7 +26,7 @@ class UVExpSamplerTests(ut.TestCase):
 
         assert abs(N - EN) / N < .05
 
-    @mock.patch('fasthawkes.model.uv_exp.uv_exp_sample_branching')
+    @mock.patch('hawkeslib.model.uv_exp.uv_exp_sample_branching')
     def test_branching_calls_correct_cython(self, mock_method):
 
         smp = self.uv.sample(self.T, method="branching")
@@ -41,7 +41,7 @@ class UVExpSamplerTests(ut.TestCase):
 
         assert abs(N - EN) / N < .05
 
-    @mock.patch('fasthawkes.model.uv_exp.uv_exp_sample_ogata')
+    @mock.patch('hawkeslib.model.uv_exp.uv_exp_sample_ogata')
     def test_ogata_calls_correct_cython(self, mock_method):
         smp = self.uv.sample(self.T, method="ogata")
 
@@ -91,7 +91,7 @@ class UVExpLikelihoodTests(ut.TestCase):
         self.uv = UVHP()
         self.uv.set_params(5, .3, 10.)
 
-    @mock.patch('fasthawkes.model.uv_exp.uv_exp_ll')
+    @mock.patch('hawkeslib.model.uv_exp.uv_exp_ll')
     def test_log_likelihood_calls_correct(self, m):
         uv = UVHP()
         a = np.array([2, 3, 6])
@@ -99,7 +99,7 @@ class UVExpLikelihoodTests(ut.TestCase):
         uv.log_likelihood_with_params(a, .3, .2, 10., 1000)
         m.assert_called()
 
-    @mock.patch('fasthawkes.model.uv_exp.uv_exp_ll')
+    @mock.patch('hawkeslib.model.uv_exp.uv_exp_ll')
     def test_log_likelihood_passes_all_params(self,m):
         uv = UVHP()
         a = np.array([2, 3, 6])
@@ -107,7 +107,7 @@ class UVExpLikelihoodTests(ut.TestCase):
         uv.log_likelihood_with_params(a, .3, .2, 10., 1000)
         m.assert_called_with(a, .3, .2, 10., 1000)
 
-    @mock.patch('fasthawkes.model.uv_exp.uv_exp_ll')
+    @mock.patch('hawkeslib.model.uv_exp.uv_exp_ll')
     def test_log_likelihood_set_params_call_correct(self, m):
         """after set_params, with log_likelihood alone"""
         uv = UVHP()
@@ -186,7 +186,7 @@ class UVExpFittingTests(ut.TestCase):
 
         self.uv = UVHP()
 
-    @mock.patch('fasthawkes.model.uv_exp.uv_exp_ll_grad')
+    @mock.patch('hawkeslib.model.uv_exp.uv_exp_ll_grad')
     def test_fitter_runs_gd(self, m):
         a = self.arr
 
@@ -197,7 +197,7 @@ class UVExpFittingTests(ut.TestCase):
 
         m.assert_called()
 
-    @mock.patch('fasthawkes.model.uv_exp.uv_exp_fit_em_base')
+    @mock.patch('hawkeslib.model.uv_exp.uv_exp_fit_em_base')
     def test_fitter_runs_em(self, m):
         a = self.arr
 

@@ -206,14 +206,14 @@ class MVExpClassTests(ut.TestCase):
             self.p.log_likelihood_with_params(self.t, self.c, np.array([.2, .3]),
                                               np.eye(2) * .2, np.array([1., 1.]))
 
-    @mock.patch('fasthawkes.model.mv_exp.mv_exp_ll')
+    @mock.patch('hawkeslib.model.mv_exp.mv_exp_ll')
     def test_llwp_nonlong_c_cast(self, m):
         c = self.c.astype(float)
         self.p.log_likelihood_with_params(self.t, c, np.array([.2, .3]),
                                               np.eye(2) * .2, 1.)
         assert m.call_args[0][1].dtype == np.int64
 
-    @mock.patch('fasthawkes.model.mv_exp.mv_exp_fit_em')
+    @mock.patch('hawkeslib.model.mv_exp.mv_exp_fit_em')
     def test_fit_nonlong_c_cast(self, m):
         mu, A, theta = np.array([.2, .3]), np.eye(2) * .2, 1.
         m.return_value = (1., (mu, A, theta), 10)
@@ -239,27 +239,27 @@ class MVExpClassTests(ut.TestCase):
         with self.assertRaises(ValueError):
             self.p.fit(self.t, c)
 
-    @mock.patch('fasthawkes.model.mv_exp.mv_exp_ll')
+    @mock.patch('hawkeslib.model.mv_exp.mv_exp_ll')
     def test_log_likelihood_call_correct(self, m):
         mu, A, theta = np.array([.2, .3]), np.eye(2) * .2, 1.
         self.p.set_params(mu, A, theta)
         self.p.log_likelihood(self.t, self.c)
         m.assert_called_once()
 
-    @mock.patch('fasthawkes.model.mv_exp.mv_exp_ll')
+    @mock.patch('hawkeslib.model.mv_exp.mv_exp_ll')
     def test_log_likelihood_with_params_call_correct(self, m):
         mu, A, theta = np.array([.2, .3]), np.eye(2) * .2, 1.
         self.p.log_likelihood_with_params(self.t, self.c, mu, A, theta)
         m.assert_called_once()
 
-    @mock.patch('fasthawkes.model.mv_exp.mv_exp_sample_branching')
+    @mock.patch('hawkeslib.model.mv_exp.mv_exp_sample_branching')
     def test_sample_call_correct(self, m):
         mu, A, theta = np.array([.2, .3]), np.eye(2) * .2, 1.
         self.p.set_params(mu, A, theta)
         self.p.sample(1000)
         m.assert_called_once()
 
-    @mock.patch('fasthawkes.model.mv_exp.mv_exp_fit_em')
+    @mock.patch('hawkeslib.model.mv_exp.mv_exp_fit_em')
     def test_fit_call_correct(self, m):
         mu, A, theta = np.array([.2, .3]), np.eye(2) * .2, 1.
         m.return_value = (1., (mu, A, theta), 10)
@@ -267,7 +267,7 @@ class MVExpClassTests(ut.TestCase):
         self.p.fit(self.t, self.c)
         m.assert_called_once()
 
-    @mock.patch('fasthawkes.model.mv_exp.mv_exp_fit_em')
+    @mock.patch('hawkeslib.model.mv_exp.mv_exp_fit_em')
     def test_fit_call_correct_kwarg(self, m):
         mu, A, theta = np.array([.2, .3]), np.eye(2) * .2, 1.
         m.return_value = (1., (mu, A, theta), 10)

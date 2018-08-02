@@ -22,7 +22,7 @@ class UnivariateExpHawkesProcess(PointProcess):
     rate parameter for the "exponential delay" -- the probability distribution of time between events that have been
     caused by one another.
 
-    This class inherits from :class:`fasthawkes.model.PointProcess` and implements several methods that are required
+    This class inherits from :class:`hawkeslib.model.PointProcess` and implements several methods that are required
     for evaluating the likelihood, taking forward samples, and fitting parameters for such Hawkes processes.
 
     For parameter fitting, the :meth:`fit` method implements both a gradient descent algorithm benefiting from

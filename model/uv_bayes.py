@@ -36,7 +36,7 @@ class HPLLOp(th.Op):
 
 class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProcessMixin):
     """
-    This class inherits from :class:`fasthawkes.UnivariateExpHawkesProcess` and implements a
+    This class inherits from :class:`hawkeslib.UnivariateExpHawkesProcess` and implements a
     "Bayesian" univariate HP model with exponential delay density.
 
     Specifically the model is determined by the conditional intensity function
@@ -54,7 +54,7 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProces
         \\end{align}
 
     Here, :math:`\\mathcal{G}` denotes the Gamma distribution in its "shape-scale" parameterization.
-    :math:`\\mathcal{B}` denotes the Beta distribution. See :class:`fasthawkes.UnivariateExpHawkesProcess`
+    :math:`\\mathcal{B}` denotes the Beta distribution. See :class:`hawkeslib.UnivariateExpHawkesProcess`
     and the tutorial for further details on the model and parameters.
 
     The hyperparameters to the appropriate Gamma and Beta priors are given during initialization as ``mu_hyp``,

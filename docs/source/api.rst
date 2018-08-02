@@ -4,10 +4,10 @@ API Reference
 Univariate Hawkes Processes
 ---------------------------
 
-.. autoclass:: fasthawkes.UnivariateExpHawkesProcess
+.. autoclass:: hawkeslib.UnivariateExpHawkesProcess
     :members:
 
-.. autoclass:: fasthawkes.BayesianUVExpHawkesProcess
+.. autoclass:: hawkeslib.BayesianUVExpHawkesProcess
     :members:
 
     .. automethod:: __init__
@@ -19,7 +19,7 @@ Multivariate Hawkes Processes
 from a finite set of cardinality K. Analogously, we can think of K distinct Hawkes processes
 running, that not only *self-excite*, but also excite other processes (i.e. are *mutually exciting*).
 
-.. autoclass:: fasthawkes.MultivariateExpHawkesProcess
+.. autoclass:: hawkeslib.MultivariateExpHawkesProcess
     :members:
 
 Poisson Processes
@@ -34,10 +34,10 @@ maximum likelihood (or MAP) estimates of parameters, and posterior sampling are 
 the well-known *complete randomness* property of Poisson processes, and also the use of a conjugate prior
 for the Bayesian case, these methods are implemented just in a few lines of code.
 
-.. autoclass:: fasthawkes.PoissonProcess
+.. autoclass:: hawkeslib.PoissonProcess
     :members:
 
-.. autoclass:: fasthawkes.BayesianPoissonProcess
+.. autoclass:: hawkeslib.BayesianPoissonProcess
     :members:
 
     .. automethod:: __init__

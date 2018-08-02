@@ -1,9 +1,9 @@
-# Welcome to `fasthawkes`
+# Welcome to `hawkeslib`
 
-[![Build Status](https://travis-ci.org/canerturkmen/fasthawkes.svg?branch=master)](https://travis-ci.org/canerturkmen/fasthawkes)
+[![Build Status](https://travis-ci.org/canerturkmen/hawkeslib.svg?branch=master)](https://travis-ci.org/canerturkmen/hawkeslib)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-`fasthawkes` started with the ambition of having a go-to implementation of plain-vanilla Hawkes processes (HP), i.e. those
+`hawkeslib` started with the ambition of having a go-to implementation of plain-vanilla Hawkes processes (HP), i.e. those
 with factorized triggering kernels with exponential decay functions.
 
 Currently, the following models are available with a unified interface:

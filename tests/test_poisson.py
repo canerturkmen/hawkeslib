@@ -56,7 +56,7 @@ class BayesianPoissonTests(ut.TestCase):
 
         self.assertAlmostEqual(res[0], mu_fit, places=4)
 
-    @mock.patch("fasthawkes.model.poisson.np.random.gamma")
+    @mock.patch("hawkeslib.model.poisson.np.random.gamma")
     def test_posterior_sample_correct_call(self, m):
         self.pp.sample_posterior(100, self.a, self.T)
         m.assert_called_with(len(self.a) + 2., 1. / (self.T + .5), size=100)

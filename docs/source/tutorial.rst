@@ -308,7 +308,7 @@ samples from this process would look like (for :math:`\lambda(t) = 3)`:
 
 
 We implement homogeneous Poisson processs in
-:class:`fasthawkes.PoissonProcess`.
+:class:`hawkeslib.PoissonProcess`.
 
 Poisson processes underlie many applications, for example in queueing theory.
 There, however, people or packets arriving in a queue can reasonably be expected
@@ -406,7 +406,7 @@ occurrence.
 
 .. code:: ipython2
 
-    from fasthawkes import UnivariateExpHawkesProcess
+    from hawkeslib import UnivariateExpHawkesProcess
     
     mu, alpha, beta = .1, .2, .1
     uv = UnivariateExpHawkesProcess()

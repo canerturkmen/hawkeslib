@@ -1,19 +1,19 @@
-.. fasthawkes documentation master file, created by
+.. hawkeslib documentation master file, created by
    sphinx-quickstart on Mon Jul 16 13:23:57 2018.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-fasthawkes
+hawkeslib
 ==========
 
-Welcome to ``fasthawkes``. 
+Welcome to ``hawkeslib``. 
 =======
-.. image:: https://travis-ci.org/canerturkmen/fasthawkes.svg?branch=master
-   :target: https://travis-ci.org/canerturkmen/fasthawkes
+.. image:: https://travis-ci.org/canerturkmen/hawkeslib.svg?branch=master
+   :target: https://travis-ci.org/canerturkmen/hawkeslib
 .. image:: https://img.shields.io/badge/License-MIT-yellow.svg
    :target: https://opensource.org/licenses/MIT
 
-Welcome to **fasthawkes**, the Cython-based Python library for fast parameter
+Welcome to **hawkeslib**, the Cython-based Python library for fast parameter
 estimation in vanilla Hawkes process models.
 
 .. toctree::
