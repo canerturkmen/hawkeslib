@@ -6,8 +6,8 @@
 hawkeslib
 ==========
 
-Welcome to ``hawkeslib``. 
-=======
+Welcome to ``hawkeslib``
+=========================
 .. image:: https://travis-ci.org/canerturkmen/hawkeslib.svg?branch=master
    :target: https://travis-ci.org/canerturkmen/hawkeslib
 .. image:: https://img.shields.io/badge/License-MIT-yellow.svg
