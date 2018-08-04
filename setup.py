@@ -19,7 +19,7 @@ ext_mods = cythonize([Extension("hawkeslib.model.c.c_uv_exp", ["hawkeslib/model/
                              ])
 
 setup(name="hawkeslib",
-      version="0.1",
+      version="0.1.1",
       description="parameter estimation for simple Hawkes (self-exciting) processes",
       author="Caner Turkmen",
       author_email="caner.turkmen@boun.edu.tr",

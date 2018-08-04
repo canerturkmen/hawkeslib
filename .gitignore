@@ -1,10 +1,14 @@
 .ipynb_checkpoints/
 build/
+dist/
+__pycache__/
 *.html
 *.so
 *.pyc
 *.c
 *.cpp
 .idea/
+
+MANIFEST*
 
 docs/build/
