@@ -6,14 +6,12 @@
 hawkeslib
 ==========
 
-Welcome to ``hawkeslib``
-=========================
 .. image:: https://travis-ci.org/canerturkmen/hawkeslib.svg?branch=master
    :target: https://travis-ci.org/canerturkmen/hawkeslib
-.. image:: https://img.shields.io/badge/License-MIT-yellow.svg
+.. image:: https://img.shields.io/badge/License-MIT-blue.svg
    :target: https://opensource.org/licenses/MIT
 
-Welcome to **hawkeslib**, the Cython-based Python library for fast parameter
+**hawkeslib**, Python library for fast parameter
 estimation in vanilla Hawkes process models.
 
 .. toctree::
@@ -22,6 +20,7 @@ estimation in vanilla Hawkes process models.
 
     intro
     tutorial
+    example
     api
 
 Indices and tables

@@ -29,12 +29,9 @@ In the future, we hope to add several extended models.
 Installation
 ----------------
 
-After cloning via git, setup.py must be run to compile the Cython source.
-
 .. code-block:: bash
 
-   $ git clone git@github.com:canerturkmen/hawkeslib.git
-   $ python setup.py build_ext --inplace
+   $ pip install git+https://github.com/canerturkmen/hawkeslib
 
 Currently, the library only supports python 2.7.
 
