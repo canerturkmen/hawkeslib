@@ -29,7 +29,7 @@ this data set from a temporal standpoint, we often take the path of
 these aggregates. Concretely, take "millisecond" timestamps of financial
 market price events:
 
-.. code:: ipython2
+.. code-block:: ipython2
 
     %matplotlib inline
     import numpy as np
@@ -52,7 +52,7 @@ Below, we aggregate them to 1 second intervals --collecting the number of
 "events" at each interval-- to arrive at a familiar
 "time-series" plot.
 
-.. code:: ipython2
+.. code-block:: ipython2
 
     # here is the "aggregated" time series plot
     bc = np.bincount(np.floor(ar / 1000.).astype(int))
@@ -88,7 +88,7 @@ Plotting the occurrences themselves, this is more intuitive. Each "point"
 in the graph is a unique data point, and an arbitrary time "grid" would
 lead to loss of information.
 
-.. code:: ipython2
+.. code-block:: ipython2
 
     plt.figure(figsize=(15,2))
     plt.title("Price jumps")
@@ -125,7 +125,7 @@ learning, a **Gaussian process** is one such example. A staple of
 quantitative finance, the **Wiener process** (Brownian motion) is another
 example.
 
-.. code:: ipython2
+.. code-block:: ipython2
 
     ar_bm = np.cumsum(np.random.randn(1000) * 0.5**2)
     plt.figure(figsize=(15,2))
@@ -164,7 +164,7 @@ occurrence" in our example above, and we will use these theoretical
 devices to explore how "event occurrences" are dispersed throughout
 time.
 
-.. code:: ipython2
+.. code-block:: ipython2
 
     ar_pp = sorted(np.random.rand(np.random.poisson(20)) * 100)
     f = plt.figure(figsize=(15,2))
@@ -251,7 +251,7 @@ Let's take a step back and recap.
 As a concrete example, take the following draws from a Poisson process
 with :math:`\lambda(t) = \exp(\sin t))`
 
-.. code:: ipython2
+.. code-block:: ipython2
 
     a = np.linspace(0, 100, 10000)
     lt = np.exp(np.sin(a))
@@ -288,7 +288,7 @@ point occurs in the vicinity of :math:`t` is constant, making it equally
 likely for points to appear anywhere along the timeline. Concretely,
 samples from this process would look like (for :math:`\lambda(t) = 3)`:
 
-.. code:: ipython2
+.. code-block:: ipython2
 
     a = np.linspace(0, 100, 10000)
     lt = np.ones_like(a) * 3
@@ -404,7 +404,7 @@ Below is a graphical representation of :math:`\lambda^*(t)`. Observe how
 the intensity is *stochastically* excited by each new arriving
 occurrence.
 
-.. code:: ipython2
+.. code-block:: ipython2
 
     from hawkeslib import UnivariateExpHawkesProcess
     
