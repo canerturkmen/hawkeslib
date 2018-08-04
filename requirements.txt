@@ -6,3 +6,4 @@ numdifftools
 theano
 pymc3
 mock
+sphinx-rtd-theme>=0.4
