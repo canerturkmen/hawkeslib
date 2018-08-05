@@ -6,7 +6,7 @@ One field where Hawkes processes have traditionally been popular is
 seismology. In this example, we look at fitting a univariate Hawkes
 model to earthquakes.
 
-.. code-block:: ipython2
+.. code-block:: python
 
     %matplotlib inline
     import requests
@@ -22,7 +22,7 @@ uses ``requests``, ``lxml`` and ``pandas`` to scrape some data from the
 `Kandilli Observatory <http://www.koeri.boun.edu.tr>`__, and whip it
 into shape for use.
 
-.. code-block:: ipython2
+.. code-block:: python
 
     res = requests.get("http://www.koeri.boun.edu.tr/scripts/lst9.asp")
     tx = html.fromstring(res.content).xpath("//pre/text()")[0]
@@ -47,7 +47,7 @@ occur in a Poisson process), and the others in the cluster would follow
 closely after. We plot our data below to verify that this appears to be
 the case. (We add some "jitter" on the y axis to make viewing easier).
 
-.. code-block:: ipython2
+.. code-block:: python
 
     plt.figure(figsize=(15,2))
     plt.ylim([-5, 5])
@@ -74,7 +74,7 @@ on, let's recap the interpretation of the parameters.
 
 Let's fit the model.
 
-.. code-block:: ipython2
+.. code-block:: python
 
     %%time
     from hawkeslib import UnivariateExpHawkesProcess as UVHP
@@ -103,7 +103,7 @@ validation) for other data sets. Here, let's take a few samples from the
 "earthquake timeline" and use it to approximate the histogram for the
 number of tremors during a 24 hour time span in the city.
 
-.. code-block:: ipython2
+.. code-block:: python
 
     nr_shocks_sample = [len(uv.sample(24)) for x in range(100000)]
     _ = plt.hist(nr_shocks_sample, bins=20)
@@ -125,7 +125,7 @@ Below, we use ``hawkeslib`` and ``pymc3`` to sample from the posterior
 distribution of parameters ``mu``, ``alpha``, and ``theta``. We then
 present traceplots and "Bayesian credible intervals" for the parameters.
 
-.. code-block:: ipython2
+.. code-block:: python
 
     import pymc3 as pm
     from hawkeslib import BayesianUVExpHawkesProcess as BUVHP
@@ -145,7 +145,7 @@ present traceplots and "Bayesian credible intervals" for the parameters.
     Only one chain was sampled, this makes it impossible to run some convergence checks
 
 
-.. code-block:: ipython2
+.. code-block:: python
 
     _ = pm.traceplot(trace)
 
@@ -154,7 +154,7 @@ present traceplots and "Bayesian credible intervals" for the parameters.
 .. image:: output_12_0_ex.png
 
 
-.. code-block:: ipython2
+.. code-block:: python
 
     # compute the BCIs
     print pm.stats.quantiles(trace["alpha"], [2.5, 97.5])
