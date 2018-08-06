@@ -1,10 +1,9 @@
 Introduction
 ================
 
-
 .. image:: https://travis-ci.org/canerturkmen/hawkeslib.svg?branch=master
    :target: https://travis-ci.org/canerturkmen/hawkeslib
-.. image:: https://img.shields.io/badge/License-MIT-yellow.svg
+.. image:: https://img.shields.io/badge/License-MIT-blue.svg
    :target: https://opensource.org/licenses/MIT
 
 About hawkeslib
@@ -31,7 +30,7 @@ Installation
 
 .. code-block:: bash
 
-   $ pip install git+https://github.com/canerturkmen/hawkeslib
+   $ pip install hawkeslib
 
 Currently, the library only supports python 2.7.
 

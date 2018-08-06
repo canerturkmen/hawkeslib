@@ -24,5 +24,5 @@ marginal likelihood (e.g. for Bayesian model comparison).
 ## Installation
 
 ```
-$ pip install git+https://github.com/canerturkmen/hawkeslib
+$ pip install hawkeslib
 ```
