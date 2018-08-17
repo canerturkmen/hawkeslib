@@ -145,8 +145,7 @@ class MVEMAlgorithmTests(ut.TestCase):
         try:
             c_mv_exp.mv_exp_fit_em(self.t, self.c, self.T, maxiter=100)
         except Exception as e:
-            if "convergence" in e.message:
-                self.fail(e.message)
+            self.fail(e.message)
 
     def test_em_params_close(self):
 
@@ -167,6 +166,15 @@ class MVEMAlgorithmTests(ut.TestCase):
         self.assertAlmostEqual(p[1][0][0], pu[1], delta=.05)
         self.assertAlmostEqual(pu[2], p[2], delta=.05)
 
+    def test_em_truefx_does_not_fail(self):
+
+        t = np.load(os.path.join(os.path.dirname(__file__), 'tfx_truefx_t.npy'))[:1000]
+        c = np.load(os.path.join(os.path.dirname(__file__), 'tfx_truefx_c.npy'))[:1000]
+        
+        try:
+            _, p, _ = c_mv_exp.mv_exp_fit_em(t, c, t[-1], maxiter=200, reltol=1e-6)
+        except Exception as e:
+            self.fail(e.message)
 
 class MVExpClassTests(ut.TestCase):
     """tests the mv exp hp python interface"""

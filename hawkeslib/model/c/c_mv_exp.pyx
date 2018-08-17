@@ -237,7 +237,7 @@ def mv_exp_fit_em(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
 
             lda = mu[ci] + theta * Aphi
 
-            E1[ci] += mu[ci] / lda
+            E1[ci] += 1. / lda
             for l in range(K):
                 E2[l, ci] += ed[l] * (1 + phi[l]) / lda
 
@@ -258,7 +258,7 @@ def mv_exp_fit_em(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
         E2 = E2 * theta * A
         theta = E2.sum() / (A.T.dot(C2).sum() + theta * E3) 
         for l in range(K):
-            mu[l] = E1[l] / T
+            mu[l] = mu[l] * E1[l] / T
             for k in range(K):
                 A[l, k] = E2[l,k] / C1[l]
 
@@ -273,3 +273,4 @@ def mv_exp_fit_em(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
         odll_p = odll
 
     return odll, (mu, A, theta), j
+
