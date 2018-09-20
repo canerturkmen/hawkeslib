@@ -37,14 +37,14 @@ ext_mods = cythonize([Extension("hawkeslib.model.c.c_uv_exp", ["hawkeslib/model/
                              ])
 
 setup(name="hawkeslib",
-      version="0.1.3",
+      version="0.1.4",
       description=DESCRIPTION,
       author="Caner Turkmen",
       author_email="caner.turkmen@boun.edu.tr",
       url="http://hawkeslib.rtfd.io",
       ext_modules=ext_mods,
       packages=["hawkeslib", "hawkeslib.model", "hawkeslib.model.c"],
-      install_required=REQUIRED,
+      install_requires=REQUIRED,
       extras_require=EXTRA_REQUIRED,
       license="MIT",
       python_requires="2.7"
