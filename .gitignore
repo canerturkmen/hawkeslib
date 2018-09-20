@@ -9,6 +9,8 @@ __pycache__/
 *.cpp
 .idea/
 
+hawkeslib.egg-info/
+
 MANIFEST*
 
 docs/build/

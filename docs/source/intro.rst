@@ -28,8 +28,11 @@ In the future, we hope to add several extended models.
 Installation
 ----------------
 
+Cython (>=0.28) and numpy (>=1.14) must be installed prior to the installation.
+
 .. code-block:: bash
 
+   $ pip install -U Cython numpy
    $ pip install hawkeslib
 
 Currently, the library only supports python 2.7.

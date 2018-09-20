@@ -23,6 +23,9 @@ marginal likelihood (e.g. for Bayesian model comparison).
 
 ## Installation
 
+`Cython` (>=0.28) and `numpy` (>=1.14) must be installed prior to the installation.
+
 ```
+$ pip install -U Cython numpy
 $ pip install hawkeslib
 ```
