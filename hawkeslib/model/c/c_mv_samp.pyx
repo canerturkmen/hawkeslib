@@ -33,7 +33,7 @@ cdef enum DelayDistribution:
 @cython.cdivision(True)
 @cython.boundscheck(False)
 @cython.wraparound(False)
-def _get_mv_offspring(double t, cnp.ndarray[ndim=1, dtype=cnp.float64_t] Acp, double theta, double T):
+def _get_mv_offspring_exp(double t, cnp.ndarray[ndim=1, dtype=cnp.float64_t] Acp, double theta, double T):
     """
     :param t: time of parent
     :param Acp: A[c_parent, :]
@@ -67,7 +67,7 @@ def _get_mv_offspring(double t, cnp.ndarray[ndim=1, dtype=cnp.float64_t] Acp, do
 @cython.boundscheck(False)
 @cython.wraparound(False)
 def _get_mv_offspring_generic(double t, cnp.ndarray[ndim=1, dtype=cnp.float64_t] Acp,
-                              double theta1, double theta2, double theta3, double T,
+                              double theta1, double theta2, double theta3, double theta4, double T,
                               DelayDistribution distid):
     """
     :param t: time of parent
@@ -133,9 +133,9 @@ def mv_sample_branching(double T,
             ci = curr_C[i]
             if distid == EXPONENTIAL:
                 # for the exponential decay case, we sample
-                tres, cres = _get_mv_offspring(curr_P[i], A[ci, :], theta1, 0, 0, T)
+                tres, cres = _get_mv_offspring_exp(curr_P[i], A[ci, :], theta1, T)
             elif distid == BETA:
-                tres, cres = _get_mv_offspring_generic(curr_P[i], A[ci, :], theta1, theta2, theta3, T, BETA)
+                tres, cres = _get_mv_offspring_generic(curr_P[i], A[ci, :], theta1, theta2, theta3, 0, T, BETA)
 
             os_P.append(tres)
             os_C.append(cres)

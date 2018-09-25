@@ -1,6 +1,5 @@
 import io
 import os
-
 try:
     from setuptools import setup, Extension
 except ImportError:
@@ -42,20 +41,22 @@ ext_mods = cythonize(
                libraries=["m"],
                language="c++",
                extra_compile_args=["-O3", "-ffast-math", "-march=native"]),
-     Extension("hawkeslib.model.c.c_mv_exp", ["hawkeslib/model/c/c_mv_exp.pyx"], include_dirs=[numpy.get_include()],
+    Extension("hawkeslib.model.c.c_mv_exp", ["hawkeslib/model/c/c_mv_exp.pyx"], include_dirs=[numpy.get_include()],
                libraries=["m"],
                language="c++",
                extra_compile_args=["-O3", "-march=native"]),
-     Extension("hawkeslib.model.c.c_uv_bayes", ["hawkeslib/model/c/c_uv_bayes.pyx"],
-               include_dirs=[numpy.get_include()],
+    Extension("hawkeslib.model.c.c_uv_bayes", ["hawkeslib/model/c/c_uv_bayes.pyx"], include_dirs=[numpy.get_include()],
                libraries=["m"],
                extra_compile_args=["-O3", "-ffast-math", "-march=native"]),
-    Extension("hawkeslib.model.c.c_mv_samp", ["hawkeslib/model/c/c_mv_samp.pyx"],
-               include_dirs=[numpy.get_include()],
+    Extension("hawkeslib.model.c.c_mv_samp", ["hawkeslib/model/c/c_mv_samp.pyx"], include_dirs=[numpy.get_include()],
                libraries=["m"],
                language="c++",
+               extra_compile_args=["-O3", "-march=native"]),
+    Extension("hawkeslib.model.c.c_mv_beta", ["hawkeslib/model/c/c_mv_beta.pyx"],
+               include_dirs=[numpy.get_include()],
+               libraries=["m"],
                extra_compile_args=["-O3", "-march=native"])
-     ])
+    ])
 
 setup(name="hawkeslib",
       version="0.1.4",
