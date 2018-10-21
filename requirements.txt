@@ -8,3 +8,5 @@ mock
 nose
 Sphinx
 sphinx-rtd-theme>=0.4
+
+-e git://github.com/canerturkmen/betaincder.git#egg=betaincder
