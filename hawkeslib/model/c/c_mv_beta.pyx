@@ -56,10 +56,6 @@ def mv_beta_ll(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
         ci = c[i]
         ti = t[i]
 
-        # debug: truncated version
-        if ti < tmax:
-            continue
-
         lda = mu[ci]
 
         for j in range(i-1, -1, -1):
@@ -74,7 +70,7 @@ def mv_beta_ll(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
 
         F[ci] += csc.betainc(th1, th2, (T - ti)/tmax) if T - ti < tmax else 1
 
-    return lJ - np.sum(A.T.dot(F)) - np.sum(mu) * (T - tmax)
+    return lJ - np.sum(A.T.dot(F)) - np.sum(mu) * T
 
 
 @cython.cdivision(True)
@@ -179,7 +175,6 @@ def mv_beta_fit_em(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
         double d, lndenom, lng, lnlda
         double odll = 0, odll_p, relimp
 
-    print  "called fit!", T, tmax
     odll_p = -np.inf
     t_last = T - t[t >= T - tmax]
     c_last = c[t >= T - tmax]
