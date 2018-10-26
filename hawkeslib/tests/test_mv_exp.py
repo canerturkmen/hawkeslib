@@ -1,3 +1,5 @@
+from __future__ import division
+
 import os
 import unittest as ut
 import mock
@@ -6,7 +8,6 @@ import numpy as np
 from ..model.mv_exp import MultivariateExpHawkesProcess
 from ..model.c import c_mv_exp, c_uv_exp
 from .. import UnivariateExpHawkesProcess
-
 
 class MVExpLikelihoodTests(ut.TestCase):
 
@@ -124,7 +125,7 @@ class MVExpBranchingSamplerTests(ut.TestCase):
         Endt = np.bincount(cres)[0]
 
         uv = UnivariateExpHawkesProcess()
-        uv.set_params(mu[0], .2, 1.)
+        uv.set_params(mu[0], .3, 1.)
         Rndt = len(uv.sample(T))
 
         devi = np.abs(Endt - Rndt) / Rndt

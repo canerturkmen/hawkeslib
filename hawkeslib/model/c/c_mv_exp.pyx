@@ -191,7 +191,7 @@ def mv_exp_fit_em(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
         odll = mv_exp_ll(t, c, mu, A, theta, T)
         relimp = (odll - odll_p) / abs(odll_p)  # relative improvement
         if relimp < -1e-5:
-            print odll_p, odll
+            print(odll_p, odll)
             raise Exception("Convergence problem, the log likelihood did not increase")
         elif relimp < reltol:
             break

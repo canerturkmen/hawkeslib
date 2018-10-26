@@ -158,7 +158,6 @@ class TestUVExpBayesMAP(ut.TestCase):
         ml = self.bhp.marginal_likelihood(a, T)
         true = -44507.4
 
-        print ml, true, a, T
         self.assertAlmostEqual(ml, true, places=1)
 
     def test_marginal_likelihood_nofit_raises(self):

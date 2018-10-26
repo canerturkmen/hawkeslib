@@ -241,9 +241,9 @@ def mv_beta_fit_em(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
         odll = mv_beta_ll(t, c, mu, A, th1, th2, tmax, T)
         relimp = (odll - odll_p) / abs(odll_p)  # relative improvement
         if iix % 50 == 0:
-            print odll
+            print(odll)
         if relimp < -1e-5:
-            print odll_p, odll
+            print(odll_p, odll)
             raise Exception("Convergence problem, the log likelihood did not increase")
         elif relimp < reltol:
             break

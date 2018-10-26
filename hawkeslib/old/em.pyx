@@ -76,7 +76,7 @@ def hawkes_em(str data_filename, int tmax, int maxiter=100, int n_threads=4, lda
     """
     ## retrieve the data
     cdef HawkesData mdata = get_all_data(bytes(data_filename), tmax)
-    print "Retrieved data (N, maxcode):", mdata.N, mdata.maxcode
+    print("Retrieved data (N, maxcode):", mdata.N, mdata.maxcode)
 
     ## define the necessary fixed terms
     cdef double ecdll, ecdll_prev = -1e15
@@ -202,7 +202,7 @@ def hawkes_em(str data_filename, int tmax, int maxiter=100, int n_threads=4, lda
         ecdll += - np.sum(Phi.T * S) + np.sum(np.log(Phi) * Gamma_ss)
         ecdll += np.sum(beta * gamma_lnd_ss) + np.sum(np.log(beta) * Gamma_ss.sum(0))
 
-        print ecdll
+        print(ecdll)
         if ecdll - ecdll_prev < .1:
             break
         ecdll_prev = ecdll
@@ -239,7 +239,7 @@ def hawkes_perplexity(str data_filename, int tmax, np.ndarray[ndim=1, dtype=np.f
     :returns: double, the predictive perplexity of the data set under lambda, Phi, beta provided
     """
     cdef HawkesData mdata = get_all_data(bytes(data_filename), tmax)
-    print "Retrieved data (N, maxcode):", mdata.N, mdata.maxcode
+    print("Retrieved data (N, maxcode):", mdata.N, mdata.maxcode)
 
     cdef:
         int N = mdata.N
