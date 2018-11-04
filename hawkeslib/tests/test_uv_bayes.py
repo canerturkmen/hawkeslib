@@ -1,4 +1,5 @@
 import os
+import random
 
 import numdifftools as nd
 import numpy as np
@@ -165,6 +166,8 @@ class TestUVExpBayesMAP(ut.TestCase):
             self.bhp.marginal_likelihood(self.arr, self.arr[-1])
 
     def test_fit_grad_0(self):
+        random.seed(0)
+
         a, T = self.arr, self.arr[-1]
         self.bhp.fit(a, T)
 

@@ -8,6 +8,7 @@ __pycache__/
 *.c
 *.cpp
 .idea/
+.tox/
 
 hawkeslib.egg-info/
 
