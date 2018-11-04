@@ -3,6 +3,8 @@
 [![Build Status](https://travis-ci.org/canerturkmen/hawkeslib.svg?branch=master)](https://travis-ci.org/canerturkmen/hawkeslib)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Documentation Status](https://readthedocs.org/projects/hawkeslib/badge/?version=latest)](https://hawkeslib.readthedocs.io/en/latest/?badge=latest)
+[![Python 2.7](https://img.shields.io/badge/python-2.7-blue.svg)](https://www.python.org/downloads/release/python-2715/)
+[![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)](https://www.python.org/downloads/release/python-360/)
 
 `hawkeslib` started with the ambition of having a simple Python implementation
 of *plain-vanilla* Hawkes (or *self-exciting* processes), i.e. those
@@ -23,9 +25,10 @@ marginal likelihood (e.g. for Bayesian model comparison).
 
 ## Installation
 
-`Cython` (>=0.28) and `numpy` (>=1.14) must be installed prior to the installation.
+`Cython` (>=0.28) and `numpy` (>=1.14), `scipy` and `betaincder` must be installed prior to the installation as
+they are required for the build.
 
 ```
-$ pip install -U Cython numpy
+$ pip install -U Cython numpy scipy betaincder
 $ pip install hawkeslib
 ```
