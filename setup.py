@@ -12,7 +12,7 @@ try:
 except:
     raise SystemExit("Cython>=0.28 and numpy are required. Please install before proceeding")
 
-REQUIRED = ["numpy>=1.14", "Cython>=0.28", "scipy>=1.1", "betaincder", "numdifftools>=0.9", "theano", "pymc3"]
+REQUIRED = ["numpy>=1.14", "Cython>=0.28", "scipy>=1.1", "numdifftools>=0.9", "theano", "pymc3"]
 EXTRA_REQUIRED = {"test": ["mock", "nose"], "docs": ["Sphinx", "sphinx-rtd-theme>=0.4"]}
 DESCRIPTION = "parameter estimation for simple Hawkes (self-exciting) processes"
 CLASSIFIERS = [
@@ -51,10 +51,6 @@ ext_mods = cythonize(
     Extension("hawkeslib.model.c.c_mv_samp", ["hawkeslib/model/c/c_mv_samp.pyx"], include_dirs=[numpy.get_include()],
                libraries=["m"],
                language="c++",
-               extra_compile_args=["-O3", "-march=native"]),
-    Extension("hawkeslib.model.c.c_mv_beta", ["hawkeslib/model/c/c_mv_beta.pyx"],
-               include_dirs=[numpy.get_include()],
-               libraries=["m"],
                extra_compile_args=["-O3", "-march=native"])
     ])
 
@@ -70,7 +66,7 @@ setup(name="hawkeslib",
       packages=["hawkeslib", "hawkeslib.model", "hawkeslib.model.c"],
       install_requires=REQUIRED,
       extras_require=EXTRA_REQUIRED,
-      setup_requires=["numpy", "cython", "scipy", "betaincder"],
+      setup_requires=["numpy", "cython", "scipy"],
       license="MIT",
       python_requires=">=2.7.5",
       classifiers=CLASSIFIERS
