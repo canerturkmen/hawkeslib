@@ -25,10 +25,10 @@ marginal likelihood (e.g. for Bayesian model comparison).
 
 ## Installation
 
-`Cython` (>=0.28) and `numpy` (>=1.14), `scipy` and `betaincder` must be installed prior to the installation as
+`Cython` (>=0.28) and `numpy` (>=1.14) and `scipy` must be installed prior to the installation as
 they are required for the build.
 
 ```
-$ pip install -U Cython numpy scipy betaincder
+$ pip install -U Cython numpy scipy
 $ pip install hawkeslib
 ```
