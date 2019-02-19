@@ -98,7 +98,7 @@ def uv_exp_ll_grad(cnp.ndarray[ndim=1, dtype=npfloat] t, double mu, double alpha
 
         nmu = 1. / mu
         Calpha = 1 - exp(-theta * (T - t[0]))
-        Ctheta = alpha * r * exp(-theta * (T - t[0]))
+        Ctheta = alpha * (T - t[0]) * exp(-theta * (T - t[0]))
 
         for j in range(N-1):
             d = t[j+1] - t[j]
