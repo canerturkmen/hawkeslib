@@ -32,6 +32,40 @@ cdef double uu() nogil:
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
+def uv_exp_phi(cnp.ndarray[ndim=1, dtype=npfloat] t,
+               double theta,
+               double T):
+    """
+    Get the ending `phi`, or the "state" of a Hawkes process after a given
+    observation
+
+    :param t: Bounded finite sample of the process up to time T. 1-d ndarray of timestamps
+    :param mu: the exogenous intensity
+    :param alpha: the infectivity factor alpha
+    :param theta: intensity parameter of the delay density
+    :param T: the maximum time
+    :return: the `phi`, or the "state of the hawkes process"
+    """
+
+    cdef:
+        double phi = 0.
+        int N = t.shape[0]
+        double d, r
+        int j = 0
+
+    with nogil:
+        for j in range(N-1):
+            d = t[j+1] - t[j]
+            ed = exp(-theta * d)  # exp_diff
+            phi = ed * (1 + phi)
+
+        phi *= exp(-theta * (T - t[j+1]))
+
+    return phi
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def uv_exp_ll(cnp.ndarray[ndim=1, dtype=npfloat] t, double mu, double alpha, double theta, double T):
     """
     Likelihood of a univariate Hawkes process with exponential decay.
@@ -48,7 +82,7 @@ def uv_exp_ll(cnp.ndarray[ndim=1, dtype=npfloat] t, double mu, double alpha, dou
         double phi = 0.
         double lComp = -mu * T
         double lJ = 0
-        int N = len(t)
+        int N = t.shape[0]
         double lda, pi, F, r, d
         int j = 0
 

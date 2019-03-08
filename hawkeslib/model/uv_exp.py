@@ -3,7 +3,14 @@ Univariate (K=1) Hawkes model with a single exponential delay density.
 """
 import numpy as np
 from .model import PointProcess
-from .c.c_uv_exp import uv_exp_ll, uv_exp_ll_grad, uv_exp_sample_ogata, uv_exp_sample_branching, uv_exp_fit_em_base
+from .c.c_uv_exp import (
+    uv_exp_ll,
+    uv_exp_ll_grad,
+    uv_exp_sample_ogata,
+    uv_exp_sample_branching,
+    uv_exp_fit_em_base,
+    uv_exp_phi
+)
 from scipy.optimize import minimize
 
 
@@ -72,7 +79,7 @@ class UnivariateExpHawkesProcess(PointProcess):
         assert None not in pars, "Some parameters seem to be missing. Did you fit() already?"
         return pars
 
-    def set_params(self, mu, alpha, theta):
+    def set_params(self, mu, alpha, theta, check_stationary=True):
         """
         Manually set the process parameters.
 
@@ -80,7 +87,8 @@ class UnivariateExpHawkesProcess(PointProcess):
         :param float alpha: the infectivity factor alpha
         :param float theta: intensity parameter of the delay density
         """
-        assert alpha < 1, "Not stationary!"
+        if check_stationary:
+            assert alpha < 1, "Not stationary!"
         assert np.min([mu, alpha, theta]) > 0, "Parameters must be greater than zero!"
 
         self._mu, self._alpha, self._theta = mu, alpha, theta
@@ -112,6 +120,28 @@ class UnivariateExpHawkesProcess(PointProcess):
         if method == "branching":
             return uv_exp_sample_branching(T, mu, alpha, theta)
         return uv_exp_sample_ogata(T, mu, alpha, theta)
+
+    def conditional_sample(self, T, tcond, Tcond=None):
+        """
+        Take a sample from a fitted model, conditioning on a previous interval
+        to compute the last state of the process.
+
+        :param T: maximum time (samples in :math:`[0, T)`)
+        :param tcond: timestamps of the conditioning interval
+        :param Tcond: length of the conditioning interval
+
+        :return: sampled timestamps
+        :rtype: numpy.array[float]
+        """
+
+        if Tcond is None:
+            Tcond = tcond[-1]
+
+        mu, alpha, theta = self._fetch_params()
+
+        phi = uv_exp_phi(tcond, theta, Tcond)
+
+        return uv_exp_sample_ogata(T, mu, alpha, theta, phi=phi)
 
     def log_likelihood(self, t, T=None):
         """
@@ -219,6 +249,9 @@ class UnivariateExpHawkesProcess(PointProcess):
             params = minres.x
             ll = self.log_likelihood_with_params(t, params[0], params[1], params[2])
 
-        self.set_params(*params)
+        else:
+            raise ValueError("method must be one of `gd` or `em`")
+
+        self.set_params(*params, check_stationary=False)
 
         return ll

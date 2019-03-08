@@ -45,7 +45,7 @@ class PointProcess(object):
         pass
 
     @abc.abstractmethod
-    def conditional_sample(self, t, T):
+    def conditional_sample(self, T, t, Tcond=None):
         pass
 
     @abc.abstractmethod
