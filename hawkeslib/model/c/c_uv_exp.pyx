@@ -86,6 +86,9 @@ def uv_exp_ll(cnp.ndarray[ndim=1, dtype=npfloat] t, double mu, double alpha, dou
         double lda, pi, F, r, d
         int j = 0
 
+    if N == 0:
+        return lJ + lComp
+
     with nogil:
 
         lComp -= alpha * (1 - exp(-theta * (T - t[0])))
@@ -127,6 +130,9 @@ def uv_exp_ll_grad(cnp.ndarray[ndim=1, dtype=npfloat] t, double mu, double alpha
         double nmu = 0., nalpha = 0., ntheta = 0.
         int N = len(t), j = 0
         double d = 0., r = 0.
+
+    if N == 0:
+        return np.array([1./mu - T, 0., 0.])
 
     with nogil:
 

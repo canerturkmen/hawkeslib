@@ -150,6 +150,14 @@ class UVExpLikelihoodTests(ut.TestCase):
 
         self.assertAlmostEqual(tgt, computed)
 
+    def test_empty_array_ok(self):
+        arr = np.array([])
+
+        tgt = -10.
+        computed = self.uv.log_likelihood(arr, 2.)
+
+        self.assertAlmostEqual(tgt, computed)
+
     def test_ll_methods_refuse_nonsorted(self):
         t = np.array([3., 2., 5.])
 
