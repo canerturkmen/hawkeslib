@@ -9,7 +9,7 @@ from scipy.stats import beta, gamma
 
 from ..model.c import c_uv_exp
 from ..model.uv_exp import UnivariateExpHawkesProcess
-from ..model.uv_bayes import BayesianUVExpHawkesProcess, HPLLOp
+from ..model.uv_bayes import BayesianUVExpHawkesProcess
 from ..model.c import c_uv_bayes
 
 
@@ -136,21 +136,6 @@ class TestUVExpBayesMAP(ut.TestCase):
         g = self.bhp._log_posterior_grad(A, A[-1])(x)
 
         assert np.linalg.norm(g, ord=1) < 10, "Gradient not zero!" + str(g)
-
-    def test_hp_ll_op_eval_ok(self):
-        import theano as th
-
-        a = self.arr
-        T = a[-1]
-
-        op = HPLLOp(a, T)
-        x, y, z = th.tensor.dscalar(), th.tensor.dscalar(), th.tensor.dscalar()
-        f = th.function([x, y, z], op(x, y, z))
-
-        opresult = f(5, .2, 10.)
-        classresult = UnivariateExpHawkesProcess.log_likelihood_with_params(a, 5, .2, 10., T)
-
-        self.assertAlmostEqual(opresult, classresult)
 
     def test_marginal_likelihood_ok(self):
         a, T = self.arr, self.arr[-1]
