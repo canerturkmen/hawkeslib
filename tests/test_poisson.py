@@ -1,6 +1,6 @@
 import unittest as ut
 import numpy as np
-from ..model.poisson import PoissonProcess, BayesianPoissonProcess
+from hawkeslib.model.poisson import PoissonProcess, BayesianPoissonProcess
 from cmath import log
 
 from scipy.optimize import fmin

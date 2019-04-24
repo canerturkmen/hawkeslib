@@ -2,8 +2,8 @@
 Univariate (K=1) Hawkes model with a single exponential delay density.
 """
 import numpy as np
-from .model import PointProcess
-from .c.c_uv_exp import (
+from hawkeslib.model.model import PointProcess
+from hawkeslib.model.c.c_uv_exp import (
     uv_exp_ll,
     uv_exp_ll_grad,
     uv_exp_sample_ogata,

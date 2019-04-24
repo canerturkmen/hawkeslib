@@ -7,7 +7,7 @@ import mock
 import numpy as np
 import os
 
-from ..model.uv_exp import UnivariateExpHawkesProcess as UVHP
+from hawkeslib.model.uv_exp import UnivariateExpHawkesProcess as UVHP
 
 
 class UVExpSamplerTests(ut.TestCase):

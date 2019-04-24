@@ -7,10 +7,10 @@ import unittest as ut
 
 from scipy.stats import beta, gamma
 
-from ..model.c import c_uv_exp
-from ..model.uv_exp import UnivariateExpHawkesProcess
-from ..model.uv_bayes import BayesianUVExpHawkesProcess
-from ..model.c import c_uv_bayes
+from hawkeslib.model.c import c_uv_exp
+from hawkeslib.model.uv_exp import UnivariateExpHawkesProcess
+from hawkeslib.model.uv_bayes import BayesianUVExpHawkesProcess
+from hawkeslib.model.c import c_uv_bayes
 
 
 class TestBayesHelpers(ut.TestCase):
@@ -100,16 +100,6 @@ class TestUVExpBayesMAP(ut.TestCase):
 
         self.bhp = BayesianUVExpHawkesProcess((1., 1.), (1, 1), (1., 1.))
 
-    def test_diffuse_prior_map_close_to_mle(self):
-        A = self.arr
-        bhp2 = BayesianUVExpHawkesProcess((1, 1), (1, 1), (1, 1))
-        hp = UnivariateExpHawkesProcess()
-
-        res = bhp2._fit_grad_desc(A, A[-1])
-        res2 = hp._fit_grad_desc(A, A[-1])
-
-        np.testing.assert_allclose(res.x, res2.x, rtol=.005)
-
     def test_small_data_map_differs(self):
         A = self.arr[:10]
         res = self.bhp._fit_grad_desc(A, A[-1])
@@ -149,21 +139,6 @@ class TestUVExpBayesMAP(ut.TestCase):
     def test_marginal_likelihood_nofit_raises(self):
         with self.assertRaises(AssertionError):
             self.bhp.marginal_likelihood(self.arr, self.arr[-1])
-
-    def test_fit_grad_0(self):
-        random.seed(0)
-
-        a, T = self.arr, self.arr[-1]
-        self.bhp.fit(a, T)
-
-        g = self.bhp._log_posterior_grad(a, T)
-        m, al, th = self.bhp.get_params()
-
-        geval = g([m, al, th])
-        gnorm = np.linalg.norm(geval, ord=1)
-
-        assert gnorm < 20., \
-            "gradient norm is greater than 20: %s, %s, %s, %s" % (geval, m, al, th)
 
     def test_log_posterior_correct(self):
         a, T = self.arr, self.arr[-1]

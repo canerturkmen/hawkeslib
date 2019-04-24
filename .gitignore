@@ -1,6 +1,7 @@
 .ipynb_checkpoints/
 build/
 dist/
+venv/
 __pycache__/
 *.html
 *.so

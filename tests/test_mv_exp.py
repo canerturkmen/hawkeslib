@@ -5,9 +5,9 @@ import unittest as ut
 import mock
 import numpy as np
 
-from ..model.mv_exp import MultivariateExpHawkesProcess
-from ..model.c import c_mv_exp, c_uv_exp
-from .. import UnivariateExpHawkesProcess
+from hawkeslib.model.mv_exp import MultivariateExpHawkesProcess
+from hawkeslib.model.c import c_mv_exp, c_uv_exp
+from hawkeslib import UnivariateExpHawkesProcess
 
 class MVExpLikelihoodTests(ut.TestCase):
 

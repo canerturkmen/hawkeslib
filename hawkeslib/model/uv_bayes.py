@@ -1,6 +1,7 @@
 import numpy as np
 import numdifftools as nd
 
+from hawkeslib.util.multitrace import MultiTrace
 from .model import BayesianPointProcessMixin
 from .c.c_uv_exp import uv_exp_ll, uv_exp_ll_grad
 from .uv_exp import UnivariateExpHawkesProcess
@@ -16,13 +17,13 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProces
     Specifically the model is determined by the conditional intensity function
 
     .. math::
-        \lambda^*(t) = \mu + \sum_{t_i < t} \\alpha \\theta \exp( - \\theta (t - t_i)),
+        \\lambda^*(t) = \mu + \sum_{t_i < t} \\alpha \\theta \exp( - \\theta (t - t_i)),
 
     and the prior distributions
 
     .. math::
         \\begin{align}
-            \mu &\sim \\mathcal{G}(k_\mu, \\eta_\mu), \\\\
+            \\mu &\sim \\mathcal{G}(k_\mu, \\eta_\mu), \\\\
             \\theta &\sim \\mathcal{G}(k_\\theta, \\eta_\\theta), \\\\
             \\alpha &\sim \\mathcal{B}(a, b).
         \\end{align}
@@ -240,23 +241,12 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProces
 
         return lp
 
-    def sample_posterior(self, t, T, n_samp, n_burnin=None):
+    def sample_posterior(self, t, T, n_samp, n_burnin=None, rwm_sigma=0.2):
         """
         Get samples from the posterior, e.g. for posterior inference or computing Bayesian credible intervals.
-        This routine samples via the random walk Metropolis (RWM) algorithm using the ``pymc3`` library.
+        This routine samples via the random walk Metropolis (RWM) algorithm.
 
-        The function returns a ``pymc3.MultiTrace`` object that can be operated on simply like a ``numpy.array``.
-        Furthermore, ``pymc3`` can be used to create "traceplots". For example via
-
-        .. code-block:: python
-
-            from matplotlib import pyplot as plt
-            import pymc3
-
-            trace = uvb.fit(t, T)
-            pymc3.traceplot(trace["mu"])
-
-            plt.plot(trace["mu"], trace["alpha"])
+        The function returns a ``MultiTrace`` object that can be operated on simply like a ``numpy.array``.
 
         :param numpy.array[float] t: Observation timestamps of the process up to time T. 1-d array of timestamps.
             must be sorted (asc)
@@ -264,11 +254,50 @@ class BayesianUVExpHawkesProcess(UnivariateExpHawkesProcess, BayesianPointProces
         :type T: float or None
         :param int n_samp: number of posterior samples to take
         :param int n_burnin: number of samples to discard (as the burn-in samples)
+        :param float rwm_sigma: the standard deviation for the proposal of the Random Walk Metropolis algorithm
 
-        :rtype: pymc3.MultiTrace
+        :rtype: hawkeslib.util.MultiTrace
         :return: the posterior samples for mu, alpha and theta as a trace object
         """
 
-        raise NotImplementedError(
-            "Posterior sampling has been removed due to dependency issues"
+        t, T = self._prep_t_T(t, T)
+
+        if n_burnin is None:
+            n_burnin = int(n_samp / 5)
+
+        samples = np.empty((n_samp, 3))
+
+        log_u = np.log(np.random.rand(n_samp))
+
+        def log_post(par):
+            return self.log_posterior_with_params(
+                t, par[0], par[1], par[2], T
+            )
+
+        x = np.array([
+            self.mu_hyp[0],
+            self.alpha_hyp[0],
+            self.theta_hyp[0]
+        ])
+
+        x += np.random.randn(3) * rwm_sigma
+        curr_log_post = log_post(x)
+
+        for i in range(n_samp):
+            x_n = x + np.random.randn(3) * rwm_sigma
+
+            prop_log_post = log_post(x_n)
+            post_diff = prop_log_post - curr_log_post
+
+            if post_diff > 0 or post_diff > log_u[i]:
+                x = x_n
+                curr_log_post = prop_log_post
+
+            samples[i] = x
+
+        result_mtrace = MultiTrace(
+            ["mu", "alpha", "theta"],
+            *[samples[:, j] for j in range(3)]
         )
+
+        return result_mtrace[n_burnin:]

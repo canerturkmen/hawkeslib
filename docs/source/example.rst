@@ -121,37 +121,16 @@ parameter estimates. In ``hawkeslib``, we do this by Bayesian inference
 in the univariate Hawkes model. Related functionality is implemented in
 :class:`hawkeslib.BayesianUVExpHawkesProcess`.
 
-Below, we use ``hawkeslib`` and ``pymc3`` to sample from the posterior
+Below, we use ``hawkeslib`` to sample from the posterior
 distribution of parameters ``mu``, ``alpha``, and ``theta``. We then
-present traceplots and "Bayesian credible intervals" for the parameters.
+present "Bayesian credible intervals" for the parameters.
 
 .. code-block:: python
 
-    import pymc3 as pm
     from hawkeslib import BayesianUVExpHawkesProcess as BUVHP
     
     buv = BUVHP(mu_hyp=(1., 10.), alpha_hyp=(1., 1.), theta_hyp=(1., 10.))
     trace = buv.sample_posterior(t, T=t[-1], n_samp=50000)
-
-
-.. parsed-literal::
-
-    Sequential sampling (1 chains in 1 job)
-    CompoundStep
-    >Metropolis: [alpha_logodds__]
-    >Metropolis: [theta_log__]
-    >Metropolis: [mu_log__]
-    100%|██████████| 60000/60000 [00:22<00:00, 2712.67it/s]
-    Only one chain was sampled, this makes it impossible to run some convergence checks
-
-
-.. code-block:: python
-
-    _ = pm.traceplot(trace)
-
-
-
-.. image:: output_12_0_ex.png
 
 
 .. code-block:: python
