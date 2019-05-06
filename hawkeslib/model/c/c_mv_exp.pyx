@@ -57,6 +57,9 @@ def mv_exp_ll(cnp.ndarray[ndim=1, dtype=cnp.float64_t] t,
         cnp.ndarray[ndim=1, dtype=cnp.float64_t] F = np.zeros(K)
         double lJ = 0., lda = 0., Aphi = 0.
 
+    if N == 0:
+        return lJ - np.sum(mu) * T
+
     with nogil:
         # for t0
         F[c[0]] += 1 - exp(-theta * (T - t[0]))

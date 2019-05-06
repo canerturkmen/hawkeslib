@@ -54,6 +54,23 @@ class MVExpLikelihoodTests(ut.TestCase):
 
         self.assertAlmostEqual(ll, ll_lib, places=4)
 
+    def test_mv_empty_array_ok(self):
+        arr = np.array([])
+
+        t = np.array([])
+        c = np.array([], dtype=np.long)
+
+        K = 3
+        mu = np.array([2., 3., 5.])
+        A = np.eye(3) * 0.5
+        theta = 1.
+
+        T = 1.
+
+        tgt = -10.
+        computed = c_mv_exp.mv_exp_ll(t, c, mu, A, theta,T)
+
+        self.assertAlmostEqual(tgt, computed)
 
 class MVExpBranchingSamplerTests(ut.TestCase):
 
@@ -146,7 +163,7 @@ class MVEMAlgorithmTests(ut.TestCase):
         try:
             c_mv_exp.mv_exp_fit_em(self.t, self.c, self.T, maxiter=100)
         except Exception as e:
-            self.fail(e.message)
+            self.fail(e)
 
     def test_em_params_close(self):
 
@@ -175,7 +192,7 @@ class MVEMAlgorithmTests(ut.TestCase):
         try:
             _, p, _ = c_mv_exp.mv_exp_fit_em(t, c, t[-1], maxiter=200, reltol=1e-6)
         except Exception as e:
-            self.fail(e.message)
+            self.fail(e)
 
 class MVExpClassTests(ut.TestCase):
     """tests the mv exp hp python interface"""
@@ -210,6 +227,7 @@ class MVExpClassTests(ut.TestCase):
         with self.assertRaises(ValueError):
             self.p.set_params(np.array([.2, .3]), np.eye(3) * .2, 1.)
 
+    # noinspection PyTypeChecker
     def test_llwp_nonfloat_theta_rejected(self):
         with self.assertRaises(ValueError):
             self.p.log_likelihood_with_params(self.t, self.c, np.array([.2, .3]),
