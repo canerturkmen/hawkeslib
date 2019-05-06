@@ -40,22 +40,22 @@ ext_mods = cythonize(
     [Extension("hawkeslib.model.c.c_uv_exp", ["hawkeslib/model/c/c_uv_exp.pyx"], include_dirs=[numpy.get_include()],
                libraries=["m"],
                language="c++",
-               extra_compile_args=["-O3", "-ffast-math", "-march=native"]),
+               extra_compile_args=["-O3", "-march=native", "-stdlib=libc++"]),
     Extension("hawkeslib.model.c.c_mv_exp", ["hawkeslib/model/c/c_mv_exp.pyx"], include_dirs=[numpy.get_include()],
                libraries=["m"],
                language="c++",
-               extra_compile_args=["-O3", "-march=native"]),
+               extra_compile_args=["-O3", "-march=native", "-stdlib=libc++"]),
     Extension("hawkeslib.model.c.c_uv_bayes", ["hawkeslib/model/c/c_uv_bayes.pyx"], include_dirs=[numpy.get_include()],
                libraries=["m"],
-               extra_compile_args=["-O3", "-ffast-math", "-march=native"]),
+               extra_compile_args=["-O3", "-march=native"]),
     Extension("hawkeslib.model.c.c_mv_samp", ["hawkeslib/model/c/c_mv_samp.pyx"], include_dirs=[numpy.get_include()],
                libraries=["m"],
                language="c++",
-               extra_compile_args=["-O3", "-march=native"])
+               extra_compile_args=["-O3", "-march=native", "-stdlib=libc++"])
     ])
 
 setup(name="hawkeslib",
-      version="0.1.4",
+      version="0.2",
       description=DESCRIPTION,
       long_description=LONG_DESCRIPTION,
       long_description_content_type="text/markdown",

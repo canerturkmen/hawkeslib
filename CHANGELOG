@@ -1,0 +1,3 @@
+[v0.2]
+- Bug fixes (likelihood computations on 0-length observations)
+- Removed heavy dependencies (theano, pymc3, and betaincder)
