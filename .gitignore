@@ -17,5 +17,6 @@ MANIFEST*
 
 docs/build/
 
+docker/
 scripts/
 src/

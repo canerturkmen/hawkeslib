@@ -55,7 +55,7 @@ ext_mods = cythonize(
     ])
 
 setup(name="hawkeslib",
-      version="0.2.1",
+      version="0.2.2",
       description=DESCRIPTION,
       long_description=LONG_DESCRIPTION,
       long_description_content_type="text/markdown",
@@ -63,7 +63,7 @@ setup(name="hawkeslib",
       author_email="caner.turkmen@boun.edu.tr",
       url="http://hawkeslib.rtfd.io",
       ext_modules=ext_mods,
-      packages=["hawkeslib", "hawkeslib.model", "hawkeslib.model.c"],
+      packages=["hawkeslib", "hawkeslib.model", "hawkeslib.model.c", "hawkeslib.util"],
       install_requires=REQUIRED,
       extras_require=EXTRA_REQUIRED,
       setup_requires=["numpy", "cython", "scipy"],
