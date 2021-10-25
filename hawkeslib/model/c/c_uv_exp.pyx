@@ -291,7 +291,7 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
     theta = mu * (1 + (uu() - .5) / 10.)
 
     odll_p = uv_exp_ll(t, mu, alpha, theta, T)
-
+    print("PrevLL ",odll_p," mu: ",mu," alpha: ",alpha, " theta: ",theta)
     for j in range(maxiter):
 
         # E-step
@@ -341,6 +341,7 @@ def uv_exp_fit_em_base(cnp.ndarray[ndim=1, dtype=npfloat] t, double T, int maxit
         # calculate observed data log likelihood
 
         odll = uv_exp_ll(t, mu, alpha, theta, T)
+        print("NewLL ",odll_p," mu: ",mu," alpha: ",alpha, " theta: ",theta, " J: ", j)
         relimp = (odll - odll_p) / abs(odll_p)  # relative improvement
         if relimp < -1e-5:
             raise Exception("Convergence problem, the log likelihood did not increase")
