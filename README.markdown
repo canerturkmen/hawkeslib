@@ -1,3 +1,11 @@
+[![deprecated](http://badges.github.io/stability-badges/dist/deprecated.svg)](http://github.com/badges/stability-badges)
+
+⚠️ Due to time constraints I am no longer able to develop / support this library. For more stable options on Hawkes processes, check out `tick` or `pyhawkes`.
+
+Thanks!
+
+--- 
+
 # Welcome to `hawkeslib`
 
 [![Build Status](https://travis-ci.org/canerturkmen/hawkeslib.svg?branch=master)](https://travis-ci.org/canerturkmen/hawkeslib)
